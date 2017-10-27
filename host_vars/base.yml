@@ -1,3 +1,10 @@
 ---
 domain_name: andre.life
 mongo_name: common-mongo
+
+fail2ban_loglevel: 2
+fail2ban_bantime: 86400
+fail2ban_destemail: '{{ admin_email }}'
+fail2ban_services:
+  - name: sshd
+    port: 22

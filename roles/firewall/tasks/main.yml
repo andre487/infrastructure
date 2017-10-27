@@ -1,9 +1,7 @@
-- name: Install software
+- name: Install UFW
   apt:
-    name: '{{ item }}'
+    name: ufw
     state: present
-  with_items:
-    - ufw
 
 - name: Allow SSH
   ufw:

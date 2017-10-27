@@ -1,0 +1,41 @@
+- name: Create common root
+  file:
+    path: /var/www/common
+    state: directory
+    owner: www-data
+    group: www-data
+  register: nginx_default_root
+
+- name: Setup Nginx config
+  template:
+    src: templates/nginx.conf.j2
+    dest: /etc/nginx/nginx.conf
+  register: nginx_conf
+
+- name: Setup default site config
+  template:
+    src: templates/default.j2
+    dest: /etc/nginx/sites-available/default
+  register: nginx_default_site
+
+- name: Enable default site
+  file:
+    state: link
+    src: /etc/nginx/sites-available/default
+    dest: /etc/nginx/sites-enabled/default
+  register: nginx_default_enabled
+
+- name: Reload config
+  service:
+    name: nginx
+    state: reloaded
+  when: |
+    nginx_default_root.changed or
+    nginx_conf.changed or
+    nginx_default_site.changed or
+    nginx_default_enabled.changed
+
+- name: Setup server index
+  template:
+    src: templates/index.html.j2
+    dest: /var/www/common/index.html

@@ -1,0 +1,6 @@
+- hosts: base
+  become: yes
+  become_method: sudo
+
+  roles:
+    - system

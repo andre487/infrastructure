@@ -1,0 +1,43 @@
+- name: Setup locale ru_RU.UTF-8
+  locale_gen:
+    name: ru_RU.UTF-8
+    state: present
+
+- name: Add APT keys
+  apt_key:
+    url: '{{ item }}'
+    state: present
+  with_items:
+    - https://download.docker.com/linux/ubuntu/gpg
+
+- name: Add APT repositories
+  apt_repository:
+    repo: '{{ item }}'
+    state: present
+  with_items:
+    - ppa:certbot/certbot
+    - deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_lsb.codename }} stable
+
+- name: Update APT lists
+  apt:
+    update_cache: yes
+    cache_valid_time: 86400
+
+- name: Install basic software
+  apt:
+    name: '{{ item }}'
+    state: present
+  with_items:
+    - zsh
+    - git
+    - curl
+    - tmux
+    - mosh
+    - python-pip
+    - python-virtualenv
+    - apt-transport-https
+    - ca-certificates
+    - software-properties-common
+    - nginx
+    - docker-ce
+    - python-certbot-nginx

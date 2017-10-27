@@ -1,0 +1,54 @@
+- name: Install DataDog agent
+  apt:
+    name: datadog-agent
+    state: present
+
+- name: Setup Docker group for agent
+  user:
+    name: dd-agent
+    group: docker
+
+- name: Configure agent
+  template:
+    src: templates/datadog.conf.j2
+    dest: /etc/dd-agent/datadog.conf
+  register: base_conf
+
+- name: Setup Nginx monitoring
+  template:
+    src: templates/nginx.yaml.j2
+    dest: /etc/dd-agent/conf.d/nginx.yaml
+  register: nginx_config
+
+- name: Setup Docker monitoring
+  template:
+    src: templates/docker_daemon.yaml.j2
+    dest: /etc/dd-agent/conf.d/docker_daemon.yaml
+  register: docker_config
+
+- name: Start agent
+  service:
+    name: datadog-agent
+    state: started
+
+- name: Restart agent
+  service:
+    name: datadog-agent
+    state: restarted
+  when: |
+    base_conf.changed or
+    nginx_config.changed or
+    docker_config.changed
+
+- name: Install docker-log-monitor
+  npm:
+    name: docker-log-monitor
+    global: yes
+
+- name: Check docker-log-monitor is running
+  shell: ps -Af | grep docker-log-monitor | grep -v grep || true
+  register: docker_log_monitor
+
+- name: Launch docker-log-monitor
+  shell: docker-log-monitor-daemon --all --pass-pseudo
+  when: docker_log_monitor.stdout == ''

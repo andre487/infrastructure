@@ -3,13 +3,24 @@
     name: ru_RU.UTF-8
     state: present
 
-- name: Add APT keys
+- name: Add APT keys from HTTPS
   apt_key:
     url: '{{ item }}'
     state: present
   with_items:
     - https://download.docker.com/linux/ubuntu/gpg
     - https://deb.nodesource.com/gpgkey/nodesource.gpg.key
+  register: apt_keys_https
+
+- name: Add APT keys from keyservers
+  apt_key:
+    keyserver: '{{ item.server }}'
+    id: '{{ item.id }}'
+    state: present
+  with_items:
+    - { server: 'hkp://keyserver.ubuntu.com:80', id: 'C7A7DA52' }
+  register: apt_keys_hkp
+
 
 - name: Add APT repositories
   apt_repository:
@@ -20,11 +31,13 @@
     - deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_lsb.codename }} stable
     - deb https://deb.nodesource.com/node_8.x {{ ansible_lsb.codename }} main
     - deb-src https://deb.nodesource.com/node_8.x {{ ansible_lsb.codename }} main
+    - deb https://apt.datadoghq.com/ stable main
+  register: apt_repos
 
 - name: Update APT caches
   apt:
     update_cache: yes
-    cache_valid_time: 86400
+  when: apt_keys_https.changed or apt_keys_hkp.changed or apt_repos.changed
 
 - name: Install basic software
   apt:
@@ -46,3 +59,10 @@
     - python-certbot-nginx
     - build-essential
     - nodejs
+
+- name: Install basic npm packages
+  npm:
+    name: '{{ item }}'
+    global: yes
+  with_items:
+    - forever

@@ -1,0 +1,2 @@
+---
+data_dog_api_key: '{{ lookup("file", "~/.private/DATA_DOG_API_KEY") }}'

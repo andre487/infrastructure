@@ -9,6 +9,7 @@
     state: present
   with_items:
     - https://download.docker.com/linux/ubuntu/gpg
+    - https://deb.nodesource.com/gpgkey/nodesource.gpg.key
 
 - name: Add APT repositories
   apt_repository:
@@ -17,8 +18,10 @@
   with_items:
     - ppa:certbot/certbot
     - deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_lsb.codename }} stable
+    - deb https://deb.nodesource.com/node_8.x {{ ansible_lsb.codename }} main
+    - deb-src https://deb.nodesource.com/node_8.x {{ ansible_lsb.codename }} main
 
-- name: Update APT lists
+- name: Update APT caches
   apt:
     update_cache: yes
     cache_valid_time: 86400
@@ -41,3 +44,5 @@
     - nginx
     - docker-ce
     - python-certbot-nginx
+    - build-essential
+    - nodejs

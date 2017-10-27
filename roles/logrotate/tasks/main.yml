@@ -1,0 +1,10 @@
+- name: Install logrotate
+  apt:
+    name: logrotate
+    state: present
+
+- name: Setup fail2ban rotation
+  template:
+    src: templates/fail2ban.j2
+    dest: /etc/logrotate.d/fail2ban
+  when: fail2ban_logtarget is defined

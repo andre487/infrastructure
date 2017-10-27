@@ -1,0 +1,41 @@
+- name: Install software
+  apt:
+    name: '{{ item }}'
+    state: present
+  with_items:
+    - ufw
+
+- name: Allow SSH
+  ufw:
+    rule: limit
+    proto: tcp
+    port: 22
+
+- name: Allow HTTP
+  ufw:
+    rule: allow
+    proto: tcp
+    to_port: 80
+
+- name: Allow HTTPS
+  ufw:
+    rule: allow
+    proto: tcp
+    to_port: 443
+
+- name: Allow Mosh
+  ufw:
+    rule: allow
+    proto: udp
+    port: '60000:61000'
+
+
+- name: Enable firewall
+  ufw:
+    state: enabled
+    policy: reject
+
+- name: Start firewall service
+  service:
+    name: ufw
+    state: started

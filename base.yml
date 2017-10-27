@@ -4,5 +4,6 @@
 
   roles:
     - system
+    - firewall
     - nginx
     - monitoring

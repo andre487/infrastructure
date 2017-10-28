@@ -20,8 +20,7 @@ email_text=$(
     echo "Server: $(uname -a)"
 )
 
-mail -v \
-    -a "From:login-notifier@andre.life" \
+mail -a "From:login-notifier@andre.life" \
     -s "$(hostname) login: $PAM_USER" "{{ admin_email }}" \
     <<< "$email_text" \
     2> "/tmp/notify-login-mail.log"

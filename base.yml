@@ -12,3 +12,4 @@
     - monitoring
     - logrotate
     - mongo
+    - deploy-users

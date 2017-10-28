@@ -1,2 +1,5 @@
 ---
 data_dog_api_key: '{{ lookup("file", "~/.private/DATA_DOG_API_KEY") }}'
+data_dog_mongo_user:
+  name: datadog
+  password: "{{ lookup('password', '~/.private/users/mongo/{{ http_domain }}/data_dog_mongo_user length=40') }}"

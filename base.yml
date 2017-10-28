@@ -9,7 +9,7 @@
     - postfix
     - fail2ban
     - nginx
+    - mongo
     - monitoring
     - logrotate
-    - mongo
     - deploy-users

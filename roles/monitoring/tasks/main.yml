@@ -1,3 +1,15 @@
+- name: Setup MongoDB monitoring user
+  mongodb_user:
+    database: admin
+    name: '{{ data_dog_mongo_user.name }}'
+    password: '{{ data_dog_mongo_user.password }}'
+    update_password: on_create
+    roles:
+      - { role: 'read', db: 'admin' }
+      - { role: 'clusterMonitor', db: 'admin' }
+      - { role: 'read', db: 'local' }
+    state: present
+
 - name: Install DataDog agent
   apt:
     name: datadog-agent
@@ -26,6 +38,12 @@
     dest: /etc/dd-agent/conf.d/docker_daemon.yaml
   register: docker_config
 
+- name: Setup MongoDB monitoring
+  template:
+    src: templates/mongo.yaml.j2
+    dest: /etc/dd-agent/conf.d/mongo.yaml
+  register: mongo_config
+
 - name: Start agent
   service:
     name: datadog-agent
@@ -38,7 +56,8 @@
   when: |
     base_conf.changed or
     nginx_config.changed or
-    docker_config.changed
+    docker_config.changed or
+    mongo_config.changed
 
 - name: Install docker-log-monitor
   npm:

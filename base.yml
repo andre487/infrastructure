@@ -5,6 +5,7 @@
   roles:
     - system
     - firewall
+    - login-notify
     - postfix
     - fail2ban
     - nginx

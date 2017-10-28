@@ -1,0 +1,24 @@
+- name: Create notifier script
+  template:
+    src: templates/notifier.j2
+    dest: /usr/local/bin/notify-login
+    mode: 0755
+
+- name: Create PAM hook
+  template:
+    src: templates/pam.d.notify-login.j2
+    dest: /etc/pam.d/notify-login
+
+- name: Include hook to /etc/pam.d/common-session
+  lineinfile:
+    dest: /etc/pam.d/common-session
+    line: '@include notify-login'
+    state: present
+    create: yes
+
+- name: Include hook to /etc/pam.d/common-session-noninteractive
+  lineinfile:
+    dest: /etc/pam.d/common-session-noninteractive
+    line: '@include notify-login'
+    state: present
+    create: yes

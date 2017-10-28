@@ -88,3 +88,23 @@
   synchronize:
     src: data/docker-clean/docker-clean
     dest: /usr/local/bin/docker-clean
+
+- name: Disable allowing login as root
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    line: 'PermitRootLogin yes'
+    state: absent
+  register: disable_ssh_root
+
+- name: Disallow login as root
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    line: 'PermitRootLogin no'
+    state: present
+  register: disallow_ssh_root
+
+- name: Reload SSH
+  service:
+    name: ssh
+    state: reloaded
+  when: disable_ssh_root.changed or disallow_ssh_root.changed

@@ -47,6 +47,7 @@
 
 - name: Check docker-log-monitor is running
   shell: ps -Af | grep docker-log-monitor | grep -v grep || true
+  changed_when: false
   register: docker_log_monitor
 
 - name: Launch docker-log-monitor

@@ -10,3 +10,4 @@
     - nginx
     - monitoring
     - logrotate
+    - mongo

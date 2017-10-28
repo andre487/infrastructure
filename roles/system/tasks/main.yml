@@ -66,3 +66,14 @@
     global: yes
   with_items:
     - forever
+
+- name: Install basic PyPI packages
+  pip:
+    name: '{{ item }}'
+  with_items:
+    - docker-py
+
+- name: Create Docker data directory
+  file:
+    name: /docker_data
+    state: directory

@@ -25,6 +25,12 @@
     dest: /etc/nginx/sites-enabled/default.conf
   register: nginx_default_enabled
 
+- name: Setup proxy params
+  template:
+    src: templates/proxy_params.j2
+    dest: /etc/nginx/proxy_params
+  register: nginx_proxy_params
+
 - name: Reload config
   service:
     name: nginx
@@ -33,7 +39,8 @@
     nginx_default_root.changed or
     nginx_conf.changed or
     nginx_default_site.changed or
-    nginx_default_enabled.changed
+    nginx_default_enabled.changed or
+    nginx_proxy_params.changed
 
 - name: Setup server index
   template:

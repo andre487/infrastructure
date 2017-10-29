@@ -14,15 +14,15 @@
 
 - name: Setup default site config
   template:
-    src: templates/default.j2
-    dest: /etc/nginx/sites-available/default
+    src: templates/default.conf.j2
+    dest: /etc/nginx/sites-available/default.conf
   register: nginx_default_site
 
 - name: Enable default site
   file:
     state: link
-    src: /etc/nginx/sites-available/default
-    dest: /etc/nginx/sites-enabled/default
+    src: /etc/nginx/sites-available/default.conf
+    dest: /etc/nginx/sites-enabled/default.conf
   register: nginx_default_enabled
 
 - name: Reload config

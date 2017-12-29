@@ -1,0 +1,12 @@
+- hosts: proxy
+  become: yes
+  become_method: sudo
+
+  roles:
+#    - system
+#    - firewall
+#    - login-notify
+#    - postfix
+#    - fail2ban
+#    - logrotate
+    - proxy

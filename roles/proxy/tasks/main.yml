@@ -1,0 +1,37 @@
+- name: Install software
+  apt:
+    name: '{{ item }}'
+    state: present
+  with_items:
+    - squid
+    - python-passlib
+
+- name: Setup proxy
+  template:
+    src: templates/squid.conf.j2
+    dest: /etc/squid/squid.conf
+  register: squid_config
+
+- name: Setup user
+  htpasswd:
+    path: /etc/squid/squidusers
+    name: '{{ proxy_user.name }}'
+    password: '{{ proxy_user.password }}'
+  register: proxy_user
+
+- name: Reload config
+  service:
+    name: squid
+    state: reloaded
+  when: squid_config.changed or proxy_user.changed
+
+- name: Start service
+  service:
+    name: squid
+    state: started
+
+- name: Allow proxy
+  ufw:
+    rule: limit
+    proto: tcp
+    port: 3128

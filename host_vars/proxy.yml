@@ -5,6 +5,8 @@ fail2ban_destemail: '{{ admin_email }}'
 fail2ban_services:
   - name: sshd
     port: 22
+  - name: squid
+    port: 3128
 
 allowed_services:
   - rule: limit

@@ -5,5 +5,5 @@
 	path = roles/postfix
 	url = https://github.com/Oefenweb/ansible-postfix.git
 [submodule "roles/system/data/docker-clean"]
-	path = roles/system/data/docker-clean
+	path = roles/docker/data/docker-clean
 	url = https://github.com/ZZROTDesign/docker-clean.git

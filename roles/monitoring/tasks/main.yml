@@ -1,3 +1,21 @@
+- name: Add APT key
+  apt_key:
+    keyserver: 'hkp://keyserver.ubuntu.com:80'
+    id: 'C7A7DA52'  # DataDog
+    state: present
+  register: data_dog_key
+
+- name: Add APT repository
+  apt_repository:
+    repo: 'deb https://apt.datadoghq.com/ stable main'
+    state: present
+  register: data_dog_repo
+
+- name: Update APT caches
+  apt:
+    update_cache: yes
+  when: data_dog_key.changed or data_dog_repo.changed
+
 - name: Setup MongoDB monitoring user
   mongodb_user:
     database: admin

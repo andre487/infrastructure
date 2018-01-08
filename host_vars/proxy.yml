@@ -5,3 +5,14 @@ fail2ban_destemail: '{{ admin_email }}'
 fail2ban_services:
   - name: sshd
     port: 22
+
+allowed_services:
+  - rule: limit
+    proto: tcp
+    to_port: 22
+  - rule: limit
+    proto: udp
+    to_port: '60000:61000'
+  - rule: limit
+    proto: tcp
+    to_port: 3128

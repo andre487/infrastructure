@@ -3,30 +3,12 @@
     name: ufw
     state: present
 
-- name: Allow SSH
+- name: Allow services
   ufw:
-    rule: limit
-    proto: tcp
-    port: 22
-
-- name: Allow HTTP
-  ufw:
-    rule: allow
-    proto: tcp
-    to_port: 80
-
-- name: Allow HTTPS
-  ufw:
-    rule: allow
-    proto: tcp
-    to_port: 443
-
-- name: Allow Mosh
-  ufw:
-    rule: allow
-    proto: udp
-    port: '60000:61000'
-
+    rule: '{{ item.rule }}'
+    proto: '{{ item.proto }}'
+    to_port: '{{ item.to_port }}'
+  with_items: '{{ allowed_services }}'
 
 - name: Enable firewall
   ufw:

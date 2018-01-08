@@ -9,4 +9,19 @@ fail2ban_services:
     port: 22
 
 deploy_users:
-  - { name: 'www-data', home: '/var/www' }
+  - name: 'www-data'
+    home: '/var/www'
+
+allowed_services:
+  - rule: limit
+    proto: tcp
+    to_port: 22
+  - rule: limit
+    proto: udp
+    to_port: '60000:61000'
+  - rule: allow
+    proto: tcp
+    to_port: 80
+  - rule: allow
+    proto: tcp
+    to_port: 443

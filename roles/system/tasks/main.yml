@@ -7,43 +7,10 @@
   timezone:
     name: UTC
 
-- name: Add APT keys from HTTPS
-  apt_key:
-    url: '{{ item }}'
-    state: present
-  with_items:
-    - https://download.docker.com/linux/ubuntu/gpg
-    - https://deb.nodesource.com/gpgkey/nodesource.gpg.key
-  register: apt_keys_https
-
-- name: Add APT keys from keyservers
-  apt_key:
-    keyserver: '{{ item.server }}'
-    id: '{{ item.id }}'
-    state: present
-  with_items:
-    - { server: 'hkp://keyserver.ubuntu.com:80', id: 'C7A7DA52' }
-  register: apt_keys_hkp
-
-
-- name: Add APT repositories
-  apt_repository:
-    repo: '{{ item }}'
-    state: present
-  with_items:
-    - ppa:nginx/stable
-    - ppa:hda-me/nginx-stable
-    - ppa:certbot/certbot
-    - deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_lsb.codename }} stable
-    - deb https://deb.nodesource.com/node_8.x {{ ansible_lsb.codename }} main
-    - deb-src https://deb.nodesource.com/node_8.x {{ ansible_lsb.codename }} main
-    - deb https://apt.datadoghq.com/ stable main
-  register: apt_repos
-
 - name: Update APT caches
   apt:
     update_cache: yes
-  when: apt_keys_https.changed or apt_keys_hkp.changed or apt_repos.changed
+    cache_valid_time: 3600
 
 - name: Install basic software
   apt:
@@ -61,45 +28,7 @@
     - apt-transport-https
     - ca-certificates
     - software-properties-common
-    - nginx
-    - brotli
-    - nginx-module-brotli
-    - nginx-module-pagespeed
-    - docker-ce
-    - python-certbot-nginx
     - build-essential
-    - nodejs
-
-- name: Install basic npm packages
-  npm:
-    name: '{{ item }}'
-    global: yes
-  with_items:
-    - forever
-
-- name: Install basic PyPI packages
-  pip:
-    name: '{{ item }}'
-  with_items:
-    - docker-py
-    - pymongo
-
-- name: Create Docker data directory
-  file:
-    name: /docker_data
-    state: directory
-
-- name: Install docker-clean
-  synchronize:
-    src: data/docker-clean/docker-clean
-    dest: /usr/local/bin/docker-clean
-
-- name: Disable allowing login as root
-  lineinfile:
-    dest: /etc/ssh/sshd_config
-    line: 'PermitRootLogin yes'
-    state: absent
-  register: disable_ssh_root
 
 - name: Disallow login as root
   lineinfile:
@@ -112,4 +41,4 @@
   service:
     name: ssh
     state: reloaded
-  when: disable_ssh_root.changed or disallow_ssh_root.changed
+  when: disallow_ssh_root.changed

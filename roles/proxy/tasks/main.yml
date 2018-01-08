@@ -29,9 +29,3 @@
   service:
     name: squid
     state: started
-
-- name: Allow proxy
-  ufw:
-    rule: limit
-    proto: tcp
-    port: 3128

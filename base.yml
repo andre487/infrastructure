@@ -8,7 +8,9 @@
     - login-notify
     - postfix
     - fail2ban
+    - docker
     - nginx
+    - nodejs
     - mongo
     - monitoring
     - logrotate

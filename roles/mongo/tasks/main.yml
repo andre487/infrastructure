@@ -12,3 +12,9 @@
     volumes:
       - /docker_data/{{ mongo_name }}/db:/data/db
       - /docker_data/{{ mongo_name }}/configdb:/data/configdb
+
+- name: Install Python driver
+  pip:
+    name: '{{ item }}'
+  with_items:
+    - pymongo

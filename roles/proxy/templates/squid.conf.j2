@@ -10,8 +10,10 @@ http_access allow localhost manager
 http_access deny manager
 
 auth_param basic program /usr/lib/squid/basic_ncsa_auth /etc/squid/squidusers
+auth_param basic blankpassword off
+
 acl lan proxy_auth REQUIRED
 http_access allow lan
 http_access deny all
 
-http_port 0.0.0.0:3128
+http_port 0.0.0.0:{{ proxy_port }}

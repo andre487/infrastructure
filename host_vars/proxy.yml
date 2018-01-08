@@ -1,4 +1,6 @@
 ---
+proxy_port: 3128
+
 fail2ban_loglevel: 2
 fail2ban_bantime: 86400
 fail2ban_destemail: '{{ admin_email }}'
@@ -6,7 +8,7 @@ fail2ban_services:
   - name: sshd
     port: 22
   - name: squid
-    port: 3128
+    port: '{{ proxy_port }}'
 
 allowed_services:
   - rule: limit
@@ -17,4 +19,4 @@ allowed_services:
     to_port: '60000:61000'
   - rule: limit
     proto: tcp
-    to_port: 3128
+    to_port: '{{ proxy_port }}'

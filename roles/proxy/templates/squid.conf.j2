@@ -1,3 +1,8 @@
+via off
+forwarded_for off
+follow_x_forwarded_for deny all
+request_header_access X-Forwarded-For deny all
+
 acl SSL_ports port 443
 acl Safe_ports port 80
 acl Safe_ports port 443
@@ -8,9 +13,7 @@ http_access deny CONNECT !SSL_ports
 
 http_access allow localhost manager
 http_access deny manager
-
 auth_param basic program /usr/lib/squid/basic_ncsa_auth /etc/squid/squidusers
-auth_param basic blankpassword off
 
 acl lan proxy_auth REQUIRED
 http_access allow lan

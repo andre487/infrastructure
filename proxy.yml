@@ -4,7 +4,7 @@
 
   roles:
     - system
-    - firewall
+#    - firewall
     - login-notify
     - postfix
     - fail2ban

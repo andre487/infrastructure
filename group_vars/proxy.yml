@@ -1,5 +1,5 @@
 ---
-proxy_port: 3128
+proxy_port: 60487
 
 fail2ban_loglevel: 2
 fail2ban_bantime: 86400

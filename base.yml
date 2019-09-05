@@ -1,5 +1,5 @@
-# Setup for web proxies
-- hosts: proxy
+# Base infrastructure setup
+- hosts: base
   become: yes
   become_method: sudo
 
@@ -9,5 +9,8 @@
     - login-notify
     - postfix
     - fail2ban
+    - docker
+    - nginx
+    - nodejs
+    - monitoring
     - logrotate
-    - proxy

@@ -1,0 +1,15 @@
+- name: Ensure certificate directory exists
+  file:
+    path: /usr/local/share/ca-certificates/Yandex
+    state: directory
+
+- name: Check Yandex certificate
+  stat:
+    path: /usr/local/share/ca-certificates/Yandex/YandexInternalRootCA.crt
+  register: yandex_crt_result
+
+- name: Setup Yandex certificate
+  get_url:
+    url: https://storage.yandexcloud.net/cloud-certs/CA.pem
+    dest: /usr/local/share/ca-certificates/Yandex/YandexInternalRootCA.crt
+  when: yandex_crt_result.stat.exists == False

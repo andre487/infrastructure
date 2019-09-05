@@ -4,6 +4,7 @@
 
   roles:
     - system
+    - yandex-cloud
     - firewall
     - login-notify
     - postfix

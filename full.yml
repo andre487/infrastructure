@@ -1,4 +1,4 @@
-- hosts: base
+- hosts: playground
   become: yes
   become_method: sudo
 

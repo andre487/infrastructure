@@ -15,6 +15,7 @@
 - name: Install basic software
   apt:
     name:
+      - aptitude
       - zsh
       - git
       - curl
@@ -23,6 +24,7 @@
       - htop
       - python-pip
       - python-virtualenv
+      - python-apt
       - apt-transport-https
       - ca-certificates
       - software-properties-common

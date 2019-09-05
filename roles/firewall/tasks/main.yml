@@ -10,10 +10,19 @@
     to_port: '{{ item.to_port }}'
   with_items: '{{ allowed_services }}'
 
+- name: Setup incoming default policy
+  ufw:
+    direction: incoming
+    policy: reject
+
+- name: Setup outgoing default policy
+  ufw:
+    direction: outgoing
+    policy: allow
+
 - name: Enable firewall
   ufw:
     state: enabled
-    policy: reject
 
 - name: Start firewall service
   service:

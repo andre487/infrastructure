@@ -15,14 +15,13 @@
 
 - name: Install software
   apt:
-    name: '{{ item }}'
+    name:
+      - nginx
+      - brotli
+      - nginx-module-brotli
+      - nginx-module-pagespeed
+      - python-certbot-nginx
     state: present
-  with_items:
-    - nginx
-    - brotli
-    - nginx-module-brotli
-    - nginx-module-pagespeed
-    - python-certbot-nginx
 
 - name: Create common root
   file:

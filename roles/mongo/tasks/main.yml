@@ -15,6 +15,5 @@
 
 - name: Install Python driver
   pip:
-    name: '{{ item }}'
-  with_items:
-    - pymongo
+    name:
+      - pymongo

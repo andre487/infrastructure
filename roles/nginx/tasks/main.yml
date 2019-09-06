@@ -7,11 +7,17 @@
     - ppa:hda-me/nginx-stable
     - ppa:certbot/certbot
   register: nginx_repos
+  tags:
+    - configuration
+    - nginx
 
 - name: Update APT caches
   apt:
     update_cache: yes
   when: nginx_repos.changed
+  tags:
+    - configuration
+    - nginx
 
 - name: Install software
   apt:
@@ -22,6 +28,9 @@
       - nginx-module-pagespeed
       - python-certbot-nginx
     state: present
+  tags:
+    - configuration
+    - nginx
 
 - name: Create common root
   file:
@@ -30,18 +39,27 @@
     owner: www-data
     group: www-data
   register: nginx_default_root
+  tags:
+    - configuration
+    - nginx
 
 - name: Setup Nginx config
   template:
     src: templates/nginx.conf.j2
     dest: /etc/nginx/nginx.conf
   register: nginx_conf
+  tags:
+    - configuration
+    - nginx
 
 - name: Setup default site config
   template:
     src: templates/default.conf.j2
     dest: /etc/nginx/sites-available/default.conf
   register: nginx_default_site
+  tags:
+    - configuration
+    - nginx
 
 - name: Enable default site
   file:
@@ -49,12 +67,18 @@
     src: /etc/nginx/sites-available/default.conf
     dest: /etc/nginx/sites-enabled/default.conf
   register: nginx_default_enabled
+  tags:
+    - configuration
+    - nginx
 
 - name: Setup proxy params
   template:
     src: templates/proxy_params.j2
     dest: /etc/nginx/proxy_params
   register: nginx_proxy_params
+  tags:
+    - configuration
+    - nginx
 
 - name: Reload config
   service:
@@ -66,8 +90,14 @@
     nginx_default_site.changed or
     nginx_default_enabled.changed or
     nginx_proxy_params.changed
+  tags:
+    - configuration
+    - nginx
 
 - name: Setup server index
   template:
     src: templates/index.html.j2
     dest: /var/www/common/index.html
+  tags:
+    - configuration
+    - nginx

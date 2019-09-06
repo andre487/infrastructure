@@ -9,6 +9,9 @@
     generate_ssh_key: yes
     ssh_key_bits: 4096
   with_items: '{{ deploy_users }}'
+  tags:
+    - configuration
+    - deploy-users
 
 - name: Download private keys
   fetch:
@@ -16,6 +19,9 @@
     dest: '~/.private/deploy/{{ http_domain }}/{{ item.name }}/id_rsa'
     flat: yes
   with_items: '{{ deploy_users }}'
+  tags:
+    - configuration
+    - deploy-users
 
 - name: Download public keys
   fetch:
@@ -23,6 +29,9 @@
     dest: '~/.private/deploy/{{ http_domain }}/{{ item.name }}/id_rsa.pub'
     flat: yes
   with_items: '{{ deploy_users }}'
+  tags:
+    - configuration
+    - deploy-users
 
 - name: Check deploy key in vault
   local_action: stat path='~/.private/deploy/{{ http_domain }}/{{ item.name }}/id_rsa.pub'
@@ -30,4 +39,6 @@
   become: no
   with_items: '{{ deploy_users }}'
   register: deploy_key_results
-
+  tags:
+    - configuration
+    - deploy-users

@@ -2,6 +2,9 @@
   file:
     name: /docker_data/{{ mongo_name }}
     state: directory
+  tags:
+    - configuration
+    - mongo
 
 - name: Run MongoDB in Docker
   docker_container:
@@ -12,8 +15,14 @@
     volumes:
       - /docker_data/{{ mongo_name }}/db:/data/db
       - /docker_data/{{ mongo_name }}/configdb:/data/configdb
+  tags:
+    - configuration
+    - mongo
 
 - name: Install Python driver
   pip:
     name:
       - pymongo
+  tags:
+    - configuration
+    - mongo

@@ -2,6 +2,9 @@
   apt:
     name: ufw
     state: present
+  tags:
+    - configuration
+    - firewall
 
 - name: Allow services
   ufw:
@@ -9,22 +12,37 @@
     proto: '{{ item.proto }}'
     to_port: '{{ item.to_port }}'
   with_items: '{{ allowed_services }}'
+  tags:
+    - configuration
+    - firewall
 
 - name: Setup incoming default policy
   ufw:
     direction: incoming
     policy: reject
+  tags:
+    - configuration
+    - firewall
 
 - name: Setup outgoing default policy
   ufw:
     direction: outgoing
     policy: allow
+  tags:
+    - configuration
+    - firewall
 
 - name: Enable firewall
   ufw:
     state: enabled
+  tags:
+    - configuration
+    - firewall
 
 - name: Start firewall service
   service:
     name: ufw
     state: started
+  tags:
+    - configuration
+    - firewall

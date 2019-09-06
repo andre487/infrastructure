@@ -3,11 +3,17 @@
     src: templates/notifier.j2
     dest: /usr/local/bin/notify-login
     mode: 0755
+  tags:
+    - configuration
+    - login-notify
 
 - name: Create PAM hook
   template:
     src: templates/pam.d.notify-login.j2
     dest: /etc/pam.d/notify-login
+  tags:
+    - configuration
+    - login-notify
 
 - name: Include hook to /etc/pam.d/common-session
   lineinfile:
@@ -15,6 +21,9 @@
     line: '@include notify-login'
     state: present
     create: yes
+  tags:
+    - configuration
+    - login-notify
 
 - name: Include hook to /etc/pam.d/common-session-noninteractive
   lineinfile:
@@ -22,3 +31,6 @@
     line: '@include notify-login'
     state: present
     create: yes
+  tags:
+    - configuration
+    - login-notify

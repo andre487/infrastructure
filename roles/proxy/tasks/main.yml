@@ -5,12 +5,18 @@
   with_items:
     - squid
     - python-passlib
+  tags:
+    - configuration
+    - proxy
 
 - name: Setup proxy
   template:
     src: templates/squid.conf.j2
     dest: /etc/squid/squid.conf
   register: squid_config
+  tags:
+    - configuration
+    - proxy
 
 - name: Setup user
   htpasswd:
@@ -18,14 +24,23 @@
     name: '{{ proxy_user.name }}'
     password: '{{ proxy_user.password }}'
   register: proxy_user
+  tags:
+    - configuration
+    - proxy
 
 - name: Reload config
   service:
     name: squid
     state: reloaded
   when: squid_config.changed or proxy_user.changed
+  tags:
+    - configuration
+    - proxy
 
 - name: Start service
   service:
     name: squid
     state: started
+  tags:
+    - configuration
+    - proxy

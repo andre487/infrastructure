@@ -3,33 +3,56 @@
     url: https://download.docker.com/linux/ubuntu/gpg
     state: present
   register: docker_key
+  tags:
+    - configuration
+    - docker
 
 - name: Add repository
   apt_repository:
       repo: 'deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_lsb.codename }} stable'
       state: present
   register: docker_repo
+  tags:
+    - configuration
+    - docker
 
 - name: Update APT caches
   apt:
     update_cache: yes
   when: docker_key.changed or docker_repo.changed
+  tags:
+    - configuration
+    - docker
 
-- name: Install Docker
+- name: Install Docker sofrware
   apt:
-    name: docker-ce
+    name:
+      - docker-ce
+      - docker-compose
     state: present
+  tags:
+    - configuration
+    - docker
 
 - name: Install Python package
   pip:
-    name: docker-py
+    name: docker
+  tags:
+    - configuration
+    - docker
 
 - name: Create data directory
   file:
     name: /docker_data
     state: directory
+  tags:
+    - configuration
+    - docker
 
 - name: Install docker-clean
   synchronize:
     src: data/docker-clean/docker-clean
     dest: /usr/local/bin/docker-clean
+  tags:
+    - configuration
+    - docker

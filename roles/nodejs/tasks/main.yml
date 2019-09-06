@@ -3,6 +3,9 @@
     url: 'https://deb.nodesource.com/gpgkey/nodesource.gpg.key'
     state: present
   register: nodejs_key
+  tags:
+    - configuration
+    - nodejs
 
 - name: Add APT repositories
   apt_repository:
@@ -12,16 +15,25 @@
     - deb https://deb.nodesource.com/node_8.x {{ ansible_lsb.codename }} main
     - deb-src https://deb.nodesource.com/node_8.x {{ ansible_lsb.codename }} main
   register: nodejs_repos
+  tags:
+    - configuration
+    - nodejs
 
 - name: Update APT caches
   apt:
     update_cache: yes
   when: nodejs_key.changed or nodejs_repos.changed
+  tags:
+    - configuration
+    - nodejs
 
 - name: Install software
   apt:
     name: nodejs
     state: present
+  tags:
+    - configuration
+    - nodejs
 
 - name: Install basic npm packages
   npm:
@@ -29,3 +41,6 @@
     global: yes
   with_items:
     - forever
+  tags:
+    - configuration
+    - nodejs

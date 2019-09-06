@@ -9,20 +9,36 @@
       - { role: 'clusterMonitor', db: 'admin' }
       - { role: 'read', db: 'local' }
     state: present
+  tags:
+    - configuration
+    - monitoring
+    - mongo
 
 - name: Setup MongoDB monitoring
   template:
     src: templates/mongo.yaml.j2
     dest: /etc/dd-agent/conf.d/mongo.yaml
   register: mongo_config
+  tags:
+    - configuration
+    - monitoring
+    - mongo
 
 - name: Start agent
   service:
     name: datadog-agent
     state: started
+  tags:
+    - configuration
+    - monitoring
+    - mongo
 
 - name: Restart agent
   service:
     name: datadog-agent
     state: restarted
   when: mongo_config.changed
+  tags:
+    - configuration
+    - monitoring
+    - mongo

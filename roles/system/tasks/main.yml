@@ -2,15 +2,27 @@
   locale_gen:
     name: ru_RU.UTF-8
     state: present
+  tags:
+    - configuration
+    - system
+    - locale
 
 - name: Setup timezone
   timezone:
     name: UTC
+  tags:
+    - configuration
+    - system
+    - timezone
 
 - name: Update APT caches
   apt:
     update_cache: yes
     cache_valid_time: 3600
+  tags:
+    - configuration
+    - system
+    - basic-software
 
 - name: Install basic software
   apt:
@@ -34,6 +46,10 @@
       - software-properties-common
       - build-essential
     state: present
+  tags:
+    - configuration
+    - system
+    - basic-software
 
 - name: Disallow login as root
   lineinfile:
@@ -41,9 +57,17 @@
     line: 'PermitRootLogin no'
     state: present
   register: disallow_ssh_root
+  tags:
+    - configuration
+    - system
+    - ssh
 
 - name: Reload SSH
   service:
     name: ssh
     state: reloaded
   when: disallow_ssh_root.changed
+  tags:
+    - configuration
+    - system
+    - ssh

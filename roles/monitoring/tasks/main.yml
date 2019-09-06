@@ -4,50 +4,77 @@
     id: 'A2923DFF56EDA6E76E55E492D3A80E30382E94DE'  # DataDog
     state: present
   register: data_dog_key
+  tags:
+    - configuration
+    - monitoring
 
 - name: Add APT repository
   apt_repository:
     repo: 'deb https://apt.datadoghq.com/ stable main'
     state: present
   register: data_dog_repo
+  tags:
+    - configuration
+    - monitoring
 
 - name: Update APT caches
   apt:
     update_cache: yes
   when: data_dog_key.changed or data_dog_repo.changed
+  tags:
+    - configuration
+    - monitoring
 
 - name: Install DataDog agent
   apt:
     name: datadog-agent
     state: present
+  tags:
+    - configuration
+    - monitoring
 
 - name: Setup Docker group for agent
   user:
     name: dd-agent
     group: docker
+  tags:
+    - configuration
+    - monitoring
 
 - name: Configure agent
   template:
     src: templates/datadog.conf.j2
     dest: /etc/dd-agent/datadog.conf
   register: base_conf
+  tags:
+    - configuration
+    - monitoring
 
 - name: Setup Nginx monitoring
   template:
     src: templates/nginx.yaml.j2
     dest: /etc/dd-agent/conf.d/nginx.yaml
   register: nginx_config
+  tags:
+    - configuration
+    - monitoring
 
 - name: Setup Docker monitoring
   template:
     src: templates/docker_daemon.yaml.j2
     dest: /etc/dd-agent/conf.d/docker_daemon.yaml
   register: docker_config
+  tags:
+    - configuration
+    - monitoring
 
 - name: Start agent
   service:
     name: datadog-agent
     state: started
+  tags:
+    - configuration
+    - monitoring
 
 - name: Restart agent
   service:
@@ -57,17 +84,29 @@
     base_conf.changed or
     nginx_config.changed or
     docker_config.changed
+  tags:
+    - configuration
+    - monitoring
 
 - name: Install docker-log-monitor
   npm:
     name: docker-log-monitor
     global: yes
+  tags:
+    - configuration
+    - monitoring
 
 - name: Check docker-log-monitor is running
   shell: ps -Af | grep docker-log-monitor | grep -v grep || true
   changed_when: false
   register: docker_log_monitor
+  tags:
+    - configuration
+    - monitoring
 
 - name: Launch docker-log-monitor
   shell: docker-log-monitor-daemon --all --pass-pseudo
   when: docker_log_monitor.stdout == ''
+  tags:
+    - configuration
+    - monitoring

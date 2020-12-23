@@ -14,3 +14,26 @@
   tags:
     - configuration
     - logrotate
+
+- name: Setup systemd rotation
+  lineinfile:
+    dest: /etc/systemd/journald.conf
+    line: '{{ item }}'
+    state: present
+    create: yes
+  register: systemd_log_rotation
+  with_items:
+    - 'SystemMaxUse=500M'
+    - 'SystemMaxFileSize=500M'
+    - 'SystemMaxFiles=100'
+    - 'SystemKeepFree=3500M'
+  tags:
+    - configuration
+    - logrotate
+
+- name: Reload systemd configs
+  shell: systemctl restart systemd-journald
+  when: systemd_log_rotation.changed
+  tags:
+    - configuration
+    - logrotate

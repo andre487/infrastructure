@@ -1,4 +1,0 @@
----
-data_dog_mongo_user:
-  name: datadog
-  password: "{{ lookup('password', '~/.private/users/mongo/{{ http_domain }}/data_dog_mongo_user length=40') }}"

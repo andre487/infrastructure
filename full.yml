@@ -13,7 +13,5 @@
     - nginx
     - nodejs
     - mongo
-    - monitoring
-    - monitoring-mongo
     - logrotate
     - deploy-users

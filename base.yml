@@ -12,5 +12,4 @@
     - fail2ban
     - docker
     - nginx
-    - nodejs
     - logrotate

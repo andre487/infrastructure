@@ -6,10 +6,6 @@ fail2ban_services:
   - name: sshd
     port: 22
 
-deploy_users:
-  - name: 'www-data'
-    home: '/var/www'
-
 allowed_services:
   - rule: limit
     proto: tcp

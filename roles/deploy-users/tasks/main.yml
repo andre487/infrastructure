@@ -1,7 +1,7 @@
 - name: Create deploy users
   user:
     name: '{{ item.name }}'
-    password: "{{ lookup('password', '/tmp/passwordfile length=40') }}"
+    password: "{{ lookup('password', '.secrets/ssh/{{ http_domain }}/{{ item.name }}/password length=128') }}"
     update_password: on_create
     home: '{{ item.home }}'
     move_home: yes
@@ -16,7 +16,7 @@
 - name: Download private keys
   fetch:
     src: '{{ item.home }}/.ssh/id_rsa'
-    dest: '~/.private/deploy/{{ http_domain }}/{{ item.name }}/id_rsa'
+    dest: '.secrets/ssh/{{ http_domain }}/{{ item.name }}/id_rsa'
     flat: yes
   with_items: '{{ deploy_users }}'
   tags:
@@ -26,19 +26,22 @@
 - name: Download public keys
   fetch:
     src: '{{ item.home }}/.ssh/id_rsa.pub'
-    dest: '~/.private/deploy/{{ http_domain }}/{{ item.name }}/id_rsa.pub'
+    dest: '.secrets/ssh/{{ http_domain }}/{{ item.name }}/id_rsa.pub'
     flat: yes
   with_items: '{{ deploy_users }}'
   tags:
     - configuration
     - deploy-users
 
-- name: Check deploy key in vault
-  local_action: stat path='~/.private/deploy/{{ http_domain }}/{{ item.name }}/id_rsa.pub'
-  ignore_errors: yes
-  become: no
+- name: Setup SSH auth
+  copy:
+    src: '{{ item.home }}/.ssh/id_rsa.pub'
+    dest: '{{ item.home }}/.ssh/authorized_keys'
+    remote_src: yes
+    owner: '{{ item.name }}'
+    group: '{{ item.name }}'
+    mode: 0600
   with_items: '{{ deploy_users }}'
-  register: deploy_key_results
   tags:
     - configuration
     - deploy-users

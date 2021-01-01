@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+set -e -o pipefail
+
+args=("$@")
+
+if [[ "${args[*]}" =~ "-i" ]]; then
+  echo "Using inventory from args: ${args[*]}" > /dev/stderr
+  inventory_arg=()
+elif [[ -z "$INFRASTRUCTURE_INVENTORY" ]]; then
+  echo "No inventory in args or env. Set '-i inv.yml' or 'INFRASTRUCTURE_INVENTORY=imv.yml'" > /dev/stderr
+  exit 1
+else
+  echo "Using inventory from env: $INFRASTRUCTURE_INVENTORY" > /dev/stderr
+  inventory_arg=(-i "$INFRASTRUCTURE_INVENTORY")
+fi
+
+dir="$(cd "$(dirname "$0")" && pwd)/.."
+"$dir/.venv/bin/$1" "${inventory_arg[@]}" "${args[@]:1}"

@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+set -e -o pipefail
+
+dir="$(cd "$(dirname "$0")" && pwd)"
+
+"$dir/_call_ansible" "$(basename "$0")" "$@"

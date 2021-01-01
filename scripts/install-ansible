@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+set -e -o pipefail
+
+cd "$(dirname "$0")/.."
+virtualenv --always-copy --download -p "$(which python3)" .venv
+.venv/bin/python -m pip install -r requirements.txt

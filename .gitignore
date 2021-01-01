@@ -34,3 +34,4 @@ fabric.properties
 ### Ansible template
 *.retry
 .secrets
+.venv

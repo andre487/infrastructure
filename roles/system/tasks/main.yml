@@ -51,6 +51,11 @@
     - system
     - basic-software
 
+- name: Install basic Python packages
+  pip:
+    name:
+      - docker
+
 - name: Disallow login as root
   lineinfile:
     dest: /etc/ssh/sshd_config

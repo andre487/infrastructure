@@ -67,3 +67,13 @@
   tags:
     - configuration
     - docker
+
+- name: Add main user to Docker group
+  user:
+    name: '{{ remote_user }}'
+    groups:
+      - '{{ remote_user }}'
+      - docker
+  tags:
+    - configuration
+    - docker

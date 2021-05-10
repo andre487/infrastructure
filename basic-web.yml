@@ -1,7 +1,0 @@
-# Setup for basic web host after base setup
-- hosts: basic_web
-  become: yes
-  become_method: sudo
-
-  roles:
-    - deploy-users

@@ -4,7 +4,7 @@
     state: present
   with_items:
     - squid
-    - python-passlib
+    - python3-passlib
   tags:
     - configuration
     - proxy

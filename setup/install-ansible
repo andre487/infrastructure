@@ -3,5 +3,5 @@ set -ex -o pipefail
 
 cd "$(dirname "$0")/.."
 rm -rf .venv
-python3 -m virtualenv --copies --download .venv
+python3 -m venv --copies --upgrade-deps .venv
 .venv/bin/python -m pip install -r requirements.txt

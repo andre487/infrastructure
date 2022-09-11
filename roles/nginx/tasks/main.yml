@@ -1,32 +1,13 @@
-- name: Add APT repositories
-  apt_repository:
-    repo: '{{ item }}'
-    state: present
-  with_items:
-    - ppa:nginx/stable
-    - ppa:hda-me/nginx-stable
-    - ppa:certbot/certbot
-  register: nginx_repos
-  tags:
-    - configuration
-    - nginx
-
-- name: Update APT caches
-  apt:
-    update_cache: yes
-  when: nginx_repos.changed
-  tags:
-    - configuration
-    - nginx
-
 - name: Install software
   apt:
     name:
-      - nginx
+      - nginx-core
+      - nginx-common
       - brotli
-      - nginx-module-brotli
-      - nginx-module-pagespeed
-      - python-certbot-nginx
+      - nginx
+      - nginx-full
+      - certbot
+      - python3-certbot-nginx
     state: present
   tags:
     - configuration
@@ -55,7 +36,7 @@
 - name: Setup default site config
   template:
     src: templates/default.conf.j2
-    dest: /etc/nginx/sites-available/default.conf
+    dest: /etc/nginx/sites-available/default
   register: nginx_default_site
   tags:
     - configuration
@@ -64,8 +45,8 @@
 - name: Enable default site
   file:
     state: link
-    src: /etc/nginx/sites-available/default.conf
-    dest: /etc/nginx/sites-enabled/default.conf
+    src: /etc/nginx/sites-available/default
+    dest: /etc/nginx/sites-enabled/default
   register: nginx_default_enabled
   tags:
     - configuration

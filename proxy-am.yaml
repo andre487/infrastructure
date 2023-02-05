@@ -1,0 +1,12 @@
+# Setup for web proxies in Armenia
+- hosts: proxy_am
+  become: yes
+  become_method: sudo
+
+  roles:
+    - system
+    - login-notify
+    - postfix
+    - fail2ban
+    - logrotate
+    - proxy

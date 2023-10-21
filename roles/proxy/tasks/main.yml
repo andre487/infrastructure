@@ -1,15 +1,16 @@
 - name: Install software
   apt:
-    name: '{{ item }}'
+    name:
+      - squid
+      - python3-passlib
+      - dante-server
+      - libpam-pwdfile
     state: present
-  with_items:
-    - squid
-    - python3-passlib
   tags:
     - configuration
     - proxy
 
-- name: Setup proxy
+- name: Setup Squid
   template:
     src: templates/squid.conf.j2
     dest: /etc/squid/squid.conf
@@ -18,7 +19,16 @@
     - configuration
     - proxy
 
-- name: Setup user
+- name: Setup Dante
+  template:
+    src: templates/danted.conf.j2
+    dest: /etc/danted.conf
+  register: dante_config
+  tags:
+    - configuration
+    - proxy
+
+- name: Setup Squid user
   htpasswd:
     path: /etc/squid/squidusers
     name: '{{ proxy_user.name }}'
@@ -28,7 +38,27 @@
     - configuration
     - proxy
 
-- name: Reload config
+- name: Setup Dante user
+  template:
+    src: templates/dante.passwd.j2
+    dest: /etc/dante.passwd
+  vars:
+    password_hash: '{{ socks5_user.password | password_hash(hashtype="md5") }}'
+  register: dante_user
+  tags:
+    - configuration
+    - proxy
+
+- name: Setup Dante PAM config
+  template:
+    src: templates/sockd.j2
+    dest: /etc/pam.d/sockd
+  register: dante_pam_config
+  tags:
+    - configuration
+    - proxy
+
+- name: Reload Squid config
   service:
     name: squid
     state: reloaded
@@ -37,9 +67,26 @@
     - configuration
     - proxy
 
-- name: Start service
+- name: Reload Dante config
+  service:
+    name: danted
+    state: restarted
+  when: dante_config.changed or dante_user.changed
+  tags:
+    - configuration
+    - proxy
+
+- name: Start Squid service
   service:
     name: squid
+    state: started
+  tags:
+    - configuration
+    - proxy
+
+- name: Start Dante service
+  service:
+    name: danted
     state: started
   tags:
     - configuration

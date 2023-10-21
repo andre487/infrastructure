@@ -6,6 +6,7 @@
   roles:
     - system
     - login-notify
+    - firewall
     - postfix
     - fail2ban
     - logrotate

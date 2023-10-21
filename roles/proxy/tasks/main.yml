@@ -12,7 +12,7 @@
 
 - name: Setup Squid
   template:
-    src: templates/squid.conf.j2
+    src: templates/squid/squid.conf.j2
     dest: /etc/squid/squid.conf
   register: squid_config
   tags:
@@ -21,7 +21,7 @@
 
 - name: Setup Dante
   template:
-    src: templates/danted.conf.j2
+    src: templates/dante/danted.conf.j2
     dest: /etc/danted.conf
   register: dante_config
   tags:
@@ -40,7 +40,7 @@
 
 - name: Setup Dante user
   template:
-    src: templates/dante.passwd.j2
+    src: templates/dante/dante.passwd.j2
     dest: /etc/dante.passwd
   vars:
     password_hash: '{{ socks5_user.password | password_hash(hashtype="md5") }}'
@@ -51,7 +51,7 @@
 
 - name: Setup Dante PAM config
   template:
-    src: templates/sockd.j2
+    src: templates/dante/sockd.j2
     dest: /etc/pam.d/sockd
   register: dante_pam_config
   tags:
@@ -71,7 +71,7 @@
   service:
     name: danted
     state: restarted
-  when: dante_config.changed or dante_user.changed
+  when: dante_config.changed or dante_user.changed or dante_pam_config.changed
   tags:
     - configuration
     - proxy

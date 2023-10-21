@@ -8,6 +8,6 @@
     - login-notify
     - firewall
     - postfix
-    - fail2ban
     - logrotate
     - proxy
+    - fail2ban

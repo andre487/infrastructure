@@ -91,3 +91,46 @@
   tags:
     - configuration
     - proxy
+
+- name: Setup fail2ban Squid Auth Error filter
+  template:
+    src: templates/fail2ban/filter.d/squid_auth_error.conf.j2
+    dest: /etc/fail2ban/filter.d/squid_auth_error.conf
+  register: fail2ban_squid_auth_error_filter
+  tags:
+    - configuration
+    - proxy
+
+- name: Setup fail2ban Dante filter
+  template:
+    src: templates/fail2ban/filter.d/dante.conf.j2
+    dest: /etc/fail2ban/filter.d/dante.conf
+  register: fail2ban_dante_filter
+  tags:
+    - configuration
+    - proxy
+
+- name: Setup fail2ban Dante PAM filter
+  template:
+    src: templates/fail2ban/filter.d/dante_pam.conf.j2
+    dest: /etc/fail2ban/filter.d/dante_pam.conf
+  register: fail2ban_dante_pam_filter
+  tags:
+    - configuration
+    - proxy
+
+- name: Check if fail2ban exists
+  stat: path=/etc/init.d/fail2ban
+  register: fail2ban_status
+  tags:
+    - configuration
+    - proxy
+
+- name: Restart fail2ban
+  service:
+    name: fail2ban
+    state: restarted
+  when: fail2ban_status.stat.exists and (fail2ban_squid_auth_error_filter.changed or fail2ban_dante_filter.changed or fail2ban_dante_pam_filter.changed)
+  tags:
+    - configuration
+    - proxy

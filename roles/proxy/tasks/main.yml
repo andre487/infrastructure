@@ -32,7 +32,7 @@
   htpasswd:
     path: /etc/squid/squidusers
     name: '{{ proxy_user.name }}'
-    password: '{{ proxy_user.password }}'
+    password: '{{ proxy_user.password | string }}'
   register: proxy_user
   tags:
     - configuration
@@ -42,8 +42,6 @@
   template:
     src: templates/dante/dante.passwd.j2
     dest: /etc/dante.passwd
-  vars:
-    password_hash: '{{ socks5_user.password | password_hash(hashtype="md5") }}'
   register: dante_user
   tags:
     - configuration

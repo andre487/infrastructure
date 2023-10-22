@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -e -o pipefail
+
+dir="$(cd "$(dirname "$0")" && pwd)/.."
+"$dir/.venv/bin/ansible-vault" "$@"

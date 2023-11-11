@@ -1,0 +1,13 @@
+# Setup for web proxies in Russia
+- hosts: proxy_ru
+  become: yes
+  become_method: sudo
+
+  roles:
+    - system
+    - login-notify
+    - firewall
+    - postfix
+    - logrotate
+    - proxy
+    - fail2ban

@@ -24,9 +24,9 @@
   register: systemd_log_rotation
   with_items:
     - 'SystemMaxUse=500M'
-    - 'SystemMaxFileSize=500M'
+    - 'SystemMaxFileSize=100M'
     - 'SystemMaxFiles=100'
-    - 'SystemKeepFree=3500M'
+    - 'SystemKeepFree=100M'
   tags:
     - configuration
     - logrotate

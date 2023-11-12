@@ -5,6 +5,7 @@
       - python3-passlib
       - dante-server
       - libpam-pwdfile
+      - fail2ban
     state: present
   tags:
     - configuration

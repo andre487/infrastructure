@@ -8,7 +8,7 @@
 - name: Install software
   apt:
     name:
-      - clamav-freshclam
+      - python3
     state: present
   tags:
     - clamav-mirror
@@ -19,6 +19,43 @@
     state: directory
     owner: www-data
     group: www-data
+  tags:
+    - clamav-mirror
+
+- name: Install cvdupdate
+  pip:
+    name: cvdupdate
+    state: present
+    executable: pip3
+  register: clamav_cvdupdate_res
+  tags:
+    - clamav-mirror
+
+- name: Setup cvdupdate dir
+  shell: cvd config set --dbdir /var/www/{{ clamav_domain }}
+  when: clamav_cvdupdate_res.changed
+  tags:
+    - clamav-mirror
+
+- name: First update ClamAV DB
+  shell: cvd update
+  when: clamav_cvdupdate_res.changed
+  tags:
+    - clamav-mirror
+
+- name: Setup periodical update of ClamAV DB
+  template:
+    src: templates/cvdupdate.cron
+    dest: /etc/cron.d/cvdupdate
+  register: clamav_cron_result
+  tags:
+    - clamav-mirror
+
+- name: Restart Cron
+  service:
+    name: cron
+    state: restarted
+  when: clamav_cron_result.changed
   tags:
     - clamav-mirror
 

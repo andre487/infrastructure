@@ -9,10 +9,6 @@ server {
     ssl_certificate_key /etc/letsencrypt/live/{{ clamav_domain }}/privkey.pem;
     ssl_certificate /etc/letsencrypt/live/{{ clamav_domain }}/fullchain.pem;
 
-    location ~ \.cvd$ {
-        root /var/lib/clamav;
-    }
-
     location / {
         root /var/www/{{ clamav_domain }};
     }
@@ -23,10 +19,6 @@ server {
     listen [::]:80;
 
     server_name {{ clamav_domain }};
-
-    location ~ \.cvd$ {
-        root /var/lib/clamav;
-    }
 
     location / {
         root /var/www/{{ clamav_domain }};

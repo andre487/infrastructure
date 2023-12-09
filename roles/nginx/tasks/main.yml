@@ -1,11 +1,8 @@
 - name: Install software
   apt:
     name:
-      - nginx-core
-      - nginx-common
-      - brotli
-      - nginx
       - nginx-full
+      - brotli
       - certbot
       - python3-certbot-nginx
     state: present

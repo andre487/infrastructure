@@ -1,0 +1,84 @@
+- name: Update APT caches
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  tags:
+    - clamav-mirror
+
+- name: Install software
+  apt:
+    name:
+      - clamav-freshclam
+    state: present
+  tags:
+    - clamav-mirror
+
+- name: Create web root
+  file:
+    dest: /var/www/{{ clamav_domain }}
+    state: directory
+    owner: www-data
+    group: www-data
+  tags:
+    - clamav-mirror
+
+- name: Check SSL certificates
+  stat:
+    path: /etc/letsencrypt/live/{{ clamav_domain }}
+  register: clamav_ssl_cert_result
+  tags:
+    - clamav-mirror
+
+- name: Setup NGINX no SSL host config
+  template:
+    src: templates/nginx-no-ssl.conf.j2
+    dest: /etc/nginx/sites-available/{{ clamav_domain }}.conf
+  when: clamav_ssl_cert_result.stat.exists == False
+  register: clamav_no_ssl_nginx_config_res
+  tags:
+    - clamav-mirror
+
+- name: Enable NGINX clamav config
+  file:
+    state: link
+    src: /etc/nginx/sites-available/{{ clamav_domain }}.conf
+    dest: /etc/nginx/sites-enabled/{{ clamav_domain }}.conf
+  register: clamav_nginx_enable_res
+  tags:
+    - clamav-mirror
+
+- name: Reload NGINX
+  service:
+    name: nginx
+    state: reloaded
+  when: clamav_no_ssl_nginx_config_res.changed or clamav_nginx_enable_res.changed
+  tags:
+    - clamav-mirror
+
+- name: Install certificate
+  shell: |
+    certbot --nginx \
+      -d {{ clamav_domain }} \
+      -n \
+      --agree-tos \
+      -m '{{ cert_email }}'
+  when: clamav_ssl_cert_result.stat.exists == False
+  register: clamav_certificate_res
+  tags:
+    - clamav-mirror
+
+- name: Setup NGINX clamav config
+  template:
+    src: templates/nginx.conf.j2
+    dest: /etc/nginx/sites-available/{{ clamav_domain }}.conf
+  register: clamav_nginx_config_res
+  tags:
+    - clamav-mirror
+
+- name: Reload NGINX
+  service:
+    name: nginx
+    state: reloaded
+  when: clamav_nginx_config_res.changed
+  tags:
+    - clamav-mirror

@@ -11,3 +11,5 @@
     - logrotate
     - proxy
     - fail2ban
+    - clamav-mirror
+    - logrotate

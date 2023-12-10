@@ -1,1 +1,3 @@
-*/30 * * * *	root	cvd update
+SHELL=/bin/sh
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
+*/30 * * * *	root	cvd update -V >/tmp/cvd-update.log 2>&1

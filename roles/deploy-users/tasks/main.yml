@@ -1,7 +1,7 @@
 - name: Create deploy users
   user:
     name: '{{ item.name }}'
-    password: "{{ lookup('password', '.secrets/ssh/{{ http_domain }}/{{ item.name }}/password length=128') }}"
+    password: "{{ lookup('password', '.secrets/ssh/{{ http_domain }}/{{ item.name }}/password length=128') | password_hash('sha512') }}"
     update_password: on_create
     home: '{{ item.home }}'
     move_home: yes

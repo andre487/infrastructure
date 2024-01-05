@@ -61,7 +61,7 @@
     - docker
 
 - name: Install docker-clean
-  synchronize:
+  copy:
     src: data/docker-clean/docker-clean
     dest: /usr/local/bin/docker-clean
   tags:

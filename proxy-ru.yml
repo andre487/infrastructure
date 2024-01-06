@@ -1,4 +1,4 @@
-# Setup for web proxies in Russia
+# Setup for proxies in Russia
 - hosts: proxy_ru
   become: yes
   become_method: sudo

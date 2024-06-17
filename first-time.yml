@@ -1,7 +1,16 @@
 - hosts: first_timers
-  become: no
+  become: '{{ become }}'
+
+  roles:
+    - postfix
+    - login-notify
 
   tasks:
+    - name: Set hostname
+      hostname:
+        name: '{{ host_name }}'
+        use: '{{ host_name_strategy }}'
+
     - name: Apt upgrade
       apt:
         clean: true
@@ -70,7 +79,13 @@
         line: 'PasswordAuthentication no'
         state: present
 
-    - name: Restart SSH
+    - name: Add .zshrc
+      copy:
+        content: ''
+        dest: '/home/{{ remote_user }}/.zshrc'
+        owner: '{{ remote_user }}'
+
+    - name: Reload SSH
       service:
         name: sshd
-        state: restarted
+        state: reloaded

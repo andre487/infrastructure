@@ -64,10 +64,10 @@
     - system
     - ssh
 
-- name: Restart SSH
+- name: Reload SSH
   service:
     name: sshd
-    state: restarted
+    state: reloaded
   when: disallow_ssh_root.changed
   tags:
     - configuration

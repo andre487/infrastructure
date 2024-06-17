@@ -1,0 +1,76 @@
+- hosts: first_timers
+  become: no
+
+  tasks:
+    - name: Apt upgrade
+      apt:
+        clean: true
+        autoclean: true
+        autoremove: true
+        update_cache: true
+        cache_valid_time: 300
+        install_recommends: false
+        upgrade: dist
+
+    - name: Install basic software
+      apt:
+        name:
+          - zsh
+          - curl
+          - tmux
+          - mosh
+          - htop
+          - python3
+          - ca-certificates
+        state: latest
+        install_recommends: false
+
+    - name: Create remote user
+      user:
+        name: '{{ remote_user }}'
+        password: '!'
+        password_lock: true
+        shell: /bin/zsh
+        state: present
+
+    - name: SSH copy ID
+      authorized_key:
+        key: '{{ default_public_key }}'
+        user: '{{ remote_user }}'
+        state: present
+        exclusive: true
+
+    - name: Allow remote user to have passwordless sudo
+      lineinfile:
+        dest: /etc/sudoers
+        state: present
+        line: '%{{ remote_user }} ALL=(ALL) NOPASSWD: ALL'
+
+    - name: Disallow login as root, step 1
+      lineinfile:
+        dest: /etc/ssh/sshd_config
+        line: 'PermitRootLogin yes'
+        state: absent
+
+    - name: Disallow login as root, step 2
+      lineinfile:
+        dest: /etc/ssh/sshd_config
+        line: 'PermitRootLogin no'
+        state: present
+
+    - name: Disallow login with password, step 1
+      lineinfile:
+        dest: /etc/ssh/sshd_config
+        line: 'PasswordAuthentication yes'
+        state: absent
+
+    - name: Disallow login with password, step 2
+      lineinfile:
+        dest: /etc/ssh/sshd_config
+        line: 'PasswordAuthentication no'
+        state: present
+
+    - name: Restart SSH
+      service:
+        name: sshd
+        state: restarted

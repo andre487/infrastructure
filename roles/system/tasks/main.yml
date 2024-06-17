@@ -52,6 +52,7 @@
     name:
       - docker
 
+# TODO: Take the logic from first-time.yml
 - name: Disallow login as root
   lineinfile:
     dest: /etc/ssh/sshd_config
@@ -63,10 +64,10 @@
     - system
     - ssh
 
-- name: Reload SSH
+- name: Restart SSH
   service:
-    name: ssh
-    state: reloaded
+    name: sshd
+    state: restarted
   when: disallow_ssh_root.changed
   tags:
     - configuration

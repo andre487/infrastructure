@@ -1,0 +1,18 @@
+[Unit]
+Description=Dumb Proxy
+Documentation=https://github.com/SenseUnit/dumbproxy/
+After=network.target network-online.target
+Requires=network-online.target
+
+[Service]
+EnvironmentFile=/etc/default/dumbproxy
+User=root
+Group=root
+ExecStart=/usr/local/bin/dumbproxy $OPTIONS
+TimeoutStopSec=5s
+PrivateTmp=true
+ProtectSystem=full
+LimitNOFILE=20000
+
+[Install]
+WantedBy=default.target

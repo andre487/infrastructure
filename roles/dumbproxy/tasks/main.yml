@@ -1,0 +1,108 @@
+- name: Install requirements
+  apt:
+    name:
+      - golang-go
+      - python3-passlib
+      - libpam-pwdfile
+    state: present
+  tags:
+    - configuration
+    - dumbproxy
+
+- name: Copy dumbproxy sources
+  copy:
+    src: dumbproxy
+    dest: '/opt/src'
+  register: dumbproxy_new_sources
+  tags:
+    - configuration
+    - dumbproxy
+
+- name: Check dumbproxy binary
+  stat:
+    path: '/opt/src/dumbproxy/dumbproxy'
+  register: dumbproxy_binary_stat
+  tags:
+    - configuration
+    - dumbproxy
+
+- name: Build dumbproxy
+  shell:
+    cmd: go build -a -buildvcs=false
+    chdir: '/opt/src/dumbproxy'
+  register: dumbproxy_new_build
+  when: dumbproxy_new_sources.changed or dumbproxy_binary_stat.stat.exists == False
+  tags:
+    - configuration
+    - dumbproxy
+
+- name: Create bin link
+  file:
+    src: '/opt/src/dumbproxy/dumbproxy'
+    dest: '/usr/local/bin/dumbproxy'
+    state: link
+  tags:
+    - configuration
+    - dumbproxy
+
+- name: Generate /etc/default/dumbproxy
+  template:
+    src: 'templates/etc_default_dumbproxy.j2'
+    dest: '/etc/default/dumbproxy'
+  register: dumbproxy_new_config
+  tags:
+    - configuration
+    - dumbproxy
+
+- name: Setup users
+  htpasswd:
+    path: /etc/dumbproxy.htpasswd
+    name: '{{ item.name }}'
+    password: '{{ item.password | string }}'
+  loop: '{{ proxy_users }}'
+  register: dumbproxy_new_users
+  tags:
+    - configuration
+    - dumbproxy
+
+- name: Create systemd config
+  template:
+    src: templates/dumbproxy.service.j2
+    dest: /etc/systemd/system/dumbproxy.service
+  register: dumbproxy_systemd_config
+  tags:
+    - configuration
+    - dumbproxy
+
+- name: Reload systemd
+  shell:
+    cmd: systemctl daemon-reload
+  when: dumbproxy_systemd_config.changed
+  tags:
+    - configuration
+    - dumbproxy
+
+- name: Start dumbproxy
+  systemd:
+    name: dumbproxy
+    state: started
+  tags:
+    - configuration
+    - dumbproxy
+
+- name: Restart dumbproxy
+  systemd:
+    name: dumbproxy
+    state: restarted
+  when: dumbproxy_new_config.changed or dumbproxy_new_users.changed or dumbproxy_new_build.changed
+  tags:
+    - configuration
+    - dumbproxy
+
+- name: Initialize proxy certs
+  shell:
+    cmd: curl -o /dev/null -s -w '%{http_code}' 'https://{{ http_domain }}' | tee /tmp/status.txt | grep 407
+  when: dumbproxy_new_config.changed or dumbproxy_new_build.changed
+  tags:
+    - configuration
+    - dumbproxy

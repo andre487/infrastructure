@@ -24,6 +24,7 @@
     - system
     - basic-software
 
+# TODO: Shorten this list
 - name: Install basic software
   apt:
     name:

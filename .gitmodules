@@ -7,3 +7,6 @@
 [submodule "roles/system/data/docker-clean"]
 	path = roles/docker/data/docker-clean
 	url = https://github.com/ZZROTDesign/docker-clean.git
+[submodule "roles/dumbproxy/dumbproxy"]
+	path = roles/dumbproxy/dumbproxy
+	url = https://github.com/SenseUnit/dumbproxy

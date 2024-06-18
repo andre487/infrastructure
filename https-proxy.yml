@@ -1,0 +1,10 @@
+- hosts: https_proxy
+  become: true
+  become_method: sudo
+
+  roles:
+    - system
+    - firewall
+    - logrotate
+    - dumbproxy
+    - fail2ban

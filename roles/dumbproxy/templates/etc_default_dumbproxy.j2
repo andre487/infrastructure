@@ -1,1 +1,1 @@
-OPTIONS=-auth basicfile://?path=/etc/dumbproxy.htpasswd -autocert -bind-address :443 -autocert-whitelist '{{ http_domain }}'
+OPTIONS=-auth basicfile://?path=/etc/dumbproxy.htpasswd -autocert -bind-address 0.0.0.0:443 -autocert-whitelist '{{ http_domain }}'

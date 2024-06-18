@@ -1,0 +1,16 @@
+# --extra-vars arg_hosts=host_group
+- hosts: '{{ arg_hosts }}'
+  become: true
+  become_method: sudo
+  environment:
+    DEBIAN_FRONTEND: noninteractive
+
+  tasks:
+    - name: Apt upgrade
+      apt:
+        update_cache: true
+        cache_valid_time: 300
+        upgrade: dist
+        install_recommends: false
+        clean: true
+        autoclean: true

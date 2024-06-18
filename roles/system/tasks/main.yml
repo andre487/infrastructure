@@ -5,6 +5,7 @@
     name:
       - zsh
       - git
+      - jq
       - curl
       - tmux
       - mosh

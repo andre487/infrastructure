@@ -1,5 +1,7 @@
 - hosts: clamav_mirrors
   become: true
+  environment:
+    DEBIAN_FRONTEND: noninteractive
 
   roles:
     - system

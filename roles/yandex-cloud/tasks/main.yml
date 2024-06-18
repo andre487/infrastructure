@@ -22,3 +22,19 @@
   tags:
     - configuration
     - yandex-cloud
+
+- name: Check YC tool
+  stat:
+    path: /root/yandex-cloud/bin/yc
+  register: yc_cli
+  tags:
+    - configuration
+    - yandex-cloud
+
+- name: Install YC tool
+  shell:
+    cmd: curl -sSL https://storage.yandexcloud.net/yandexcloud-yc/install.sh | bash
+  when: yc_cli.stat.exists == False
+  tags:
+    - configuration
+    - yandex-cloud

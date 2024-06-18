@@ -1,5 +1,7 @@
 - hosts: first_timers
   become: '{{ become }}'
+  environment:
+    DEBIAN_FRONTEND: noninteractive
 
   roles:
     - postfix

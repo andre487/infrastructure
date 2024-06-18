@@ -24,38 +24,16 @@
     - configuration
     - docker
 
-- name: Install basic Python packages
-  pip:
-    name:
-      - docker
-
 - name: Install Docker CE
   apt:
-    name: docker-ce
+    name:
+      - docker-ce
+      - docker-compose-plugin
+      - python3-docker
     state: present
   tags:
     - configuration
     - docker
-
-- name: Check Docker Compose
-  stat:
-    path: /usr/local/bin/docker-compose
-  register: docker_compose_result
-  tags:
-    - configuration
-    - docker
-    - docker-compose
-
-- name: Install Docker compose
-  get_url:
-    url: https://github.com/docker/compose/releases/download/1.24.1/docker-compose-{{ ansible_system }}-{{ ansible_architecture }}
-    dest: /usr/local/bin/docker-compose
-    mode: 0755
-  when: docker_compose_result.stat.exists == False
-  tags:
-    - configuration
-    - docker
-    - docker-compose
 
 - name: Create data directory
   file:
@@ -69,6 +47,7 @@
   copy:
     src: data/docker-clean/docker-clean
     dest: /usr/local/bin/docker-clean
+    mode: 0755
   tags:
     - configuration
     - docker

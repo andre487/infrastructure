@@ -1,0 +1,11 @@
+# --extra-vars arg_hosts=host_group
+- hosts: '{{ arg_hosts }}'
+  become: true
+  become_method: sudo
+  environment:
+    DEBIAN_FRONTEND: noninteractive
+
+  tasks:
+    - name: Docker clean
+      shell:
+        cmd: docker-clean 2>&1 | tee /tmp/docker-clean.out

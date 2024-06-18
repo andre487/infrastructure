@@ -11,6 +11,15 @@
         name: '{{ host_name }}'
         use: '{{ host_name_strategy }}'
 
+    - name: Setup locale ru_RU.UTF-8
+      locale_gen:
+        name: ru_RU.UTF-8
+        state: present
+
+    - name: Setup timezone
+      timezone:
+        name: UTC
+
     - name: Apt upgrade
       apt:
         clean: true
@@ -27,7 +36,6 @@
           - zsh
           - curl
           - tmux
-          - mosh
           - htop
           - python3
           - ca-certificates

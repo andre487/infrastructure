@@ -24,6 +24,11 @@
     - configuration
     - docker
 
+- name: Install basic Python packages
+  pip:
+    name:
+      - docker
+
 - name: Install Docker CE
   apt:
     name: docker-ce

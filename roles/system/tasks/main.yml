@@ -1,32 +1,7 @@
-- name: Setup locale ru_RU.UTF-8
-  locale_gen:
-    name: ru_RU.UTF-8
-    state: present
-  tags:
-    - configuration
-    - system
-    - locale
-
-- name: Setup timezone
-  timezone:
-    name: UTC
-  tags:
-    - configuration
-    - system
-    - timezone
-
-- name: Update APT caches
+- name: Install basic software
   apt:
     update_cache: yes
     cache_valid_time: 3600
-  tags:
-    - configuration
-    - system
-    - basic-software
-
-# TODO: Shorten this list
-- name: Install basic software
-  apt:
     name:
       - zsh
       - git
@@ -47,30 +22,3 @@
     - configuration
     - system
     - basic-software
-
-- name: Install basic Python packages
-  pip:
-    name:
-      - docker
-
-# TODO: Take the logic from first-time.yml
-- name: Disallow login as root
-  lineinfile:
-    dest: /etc/ssh/sshd_config
-    line: 'PermitRootLogin no'
-    state: present
-  register: disallow_ssh_root
-  tags:
-    - configuration
-    - system
-    - ssh
-
-- name: Reload SSH
-  service:
-    name: sshd
-    state: reloaded
-  when: disallow_ssh_root.changed
-  tags:
-    - configuration
-    - system
-    - ssh

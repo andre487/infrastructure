@@ -1,14 +1,11 @@
-# Base infrastructure setup
-- hosts: base
-  become: yes
+- hosts: docker_web
+  become: true
   become_method: sudo
 
   roles:
     - system
     - yandex-cloud
     - firewall
-    - login-notify
-    - postfix
     - fail2ban
     - docker
     - nginx

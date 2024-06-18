@@ -1,4 +1,0 @@
----
-deploy_users:
-  - name: 'www-data'
-    home: '/var/www'

@@ -1,0 +1,10 @@
+- hosts: clamav_mirrors
+  become: true
+
+  roles:
+    - system
+    - firewall
+    - logrotate
+    - fail2ban
+    - clamav-mirror
+    - logrotate

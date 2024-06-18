@@ -10,6 +10,7 @@ server {
     ssl_certificate /etc/letsencrypt/live/{{ clamav_domain }}/fullchain.pem;
 
     location / {
+        autoindex on;
         root /var/www/{{ clamav_domain }};
     }
 }

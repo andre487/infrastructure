@@ -1,0 +1,59 @@
+- name: Check SSL certificates
+  stat:
+    path: /etc/letsencrypt/live/{{ http_domain }}
+  register: nginx_ssl_result
+
+- name: Setup NGINX no SSL host config
+  template:
+    src: templates/nginx-no-ssl.conf.j2
+    dest: /etc/nginx/sites-available/{{ http_domain }}.conf
+  when: nginx_ssl_result.stat.exists == False
+  register: no_ssl_config_res
+
+- name: Enable NGINX host config
+  file:
+    state: link
+    src: /etc/nginx/sites-available/{{ http_domain }}.conf
+    dest: /etc/nginx/sites-enabled/{{ http_domain }}.conf
+  when: no_ssl_config_res.changed
+
+- name: Reload NGINX
+  service:
+    name: nginx
+    state: reloaded
+  when: no_ssl_config_res.changed
+
+- name: Install certificate
+  shell: |
+    certbot --nginx \
+      -d {{ http_domain }} \
+      -n \
+      --agree-tos \
+      -m '{{ cert_email }}'
+  when: nginx_ssl_result.stat.exists == False
+  register: certificate_res
+
+- name: Create web root
+  file:
+    dest: /var/www/{{ http_domain }}
+    state: directory
+    owner: www-data
+    group: www-data
+
+- name: Setup NGINX host config
+  template:
+    src: templates/nginx.conf.j2
+    dest: /etc/nginx/sites-available/{{ http_domain }}.conf
+  register: config_res
+
+- name: Enable NGINX host config
+  file:
+    state: link
+    src: /etc/nginx/sites-available/{{ http_domain }}.conf
+    dest: /etc/nginx/sites-enabled/{{ http_domain }}.conf
+
+- name: Reload NGINX
+  service:
+    name: nginx
+    state: reloaded
+  when: config_res.changed or certificate_res.changed

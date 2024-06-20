@@ -1,0 +1,7 @@
+project_path_: "{{ project_path | default('/opt/app') }}"
+mongo_db_path_: "{{ mongo_db_path | default('/data/db') }}"
+mongo_config_path_: "{{ mongo_config_path | default('') }}"
+mongo_tag_: "{{ mongo_tag | default('4.4-ubuntu2004') }}"
+project_environment_: "{{ project_environment | default([]) }}"
+mongo_environment_: "{{ mongo_environment | default([]) }}"
+docker_compose_file_: "{{ docker_compose_file | default('templates/docker-compose.yml.j2') }}"

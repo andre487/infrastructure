@@ -1,0 +1,33 @@
+- name: Create app dir
+  file:
+    path: '{{ project_path_ }}'
+    state: directory
+
+- name: Create data dir
+  file:
+    path: '{{ mongo_db_path_ }}'
+    state: directory
+
+- name: Setup docker compose config
+  template:
+    src: '{{ docker_compose_file_ }}'
+    dest: '{{ project_path_ }}/docker-compose.yml'
+
+- name: Run app
+  shell:
+    executable: /bin/bash
+    cmd: |
+      set -eo pipefail
+      docker compose pull
+      docker compose stop || true
+      docker compose up --detach --remove-orphans --wait
+    chdir: '{{ project_path_ }}'
+
+- name: Cleanup images
+  shell:
+    executable: /usr/bin/python3
+    cmd: "{{ lookup('file', 'scripts/cleanup_docker_images.py') }}"
+
+- name: Docker clean
+  shell:
+    cmd: docker-clean

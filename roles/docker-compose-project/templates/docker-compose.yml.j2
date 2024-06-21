@@ -2,10 +2,18 @@ services:
   app:
     restart: always
     image: '{{ app_docker_image }}'
+
+    {% if publish_app_ports_ %}
+
     ports:
-      - '127.0.0.1:{{ service_port }}:{{ internal_port }}'
+      - '127.0.0.1:{{ service_port_ }}:{{ internal_port_ }}'
+    {% endif %}
+
+    {% if add_mongo_ %}
+
     depends_on:
       - mongodb
+    {% endif %}
 
     {% if project_environment_ %}
 
@@ -15,6 +23,7 @@ services:
       {% endfor %}
     {% endif %}
 
+  {% if add_mongo_ %}
   mongodb:
     restart: always
     user: root
@@ -33,3 +42,4 @@ services:
 
       - {{ mongo_config_path_ }}:/data/configdb:rw
       {% endif %}
+  {% endif %}

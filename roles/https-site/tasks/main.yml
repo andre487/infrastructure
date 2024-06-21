@@ -2,6 +2,9 @@
   stat:
     path: /etc/letsencrypt/live/{{ http_domain }}
   register: nginx_ssl_result
+  tags:
+    - deploy
+    - https-site
 
 - name: Setup NGINX no SSL host config
   template:
@@ -9,6 +12,9 @@
     dest: /etc/nginx/sites-available/{{ http_domain }}.conf
   when: nginx_ssl_result.stat.exists == False
   register: no_ssl_config_res
+  tags:
+    - deploy
+    - https-site
 
 - name: Enable NGINX host config
   file:
@@ -16,12 +22,18 @@
     src: /etc/nginx/sites-available/{{ http_domain }}.conf
     dest: /etc/nginx/sites-enabled/{{ http_domain }}.conf
   when: no_ssl_config_res.changed
+  tags:
+    - deploy
+    - https-site
 
 - name: Reload NGINX
   service:
     name: nginx
     state: reloaded
   when: no_ssl_config_res.changed
+  tags:
+    - deploy
+    - https-site
 
 - name: Install certificate
   shell: |
@@ -32,6 +44,9 @@
       -m '{{ cert_email }}'
   when: nginx_ssl_result.stat.exists == False
   register: certificate_res
+  tags:
+    - deploy
+    - https-site
 
 - name: Create web root
   file:
@@ -39,21 +54,33 @@
     state: directory
     owner: www-data
     group: www-data
+  tags:
+    - deploy
+    - https-site
 
 - name: Setup NGINX host config
   template:
     src: templates/nginx.conf.j2
     dest: /etc/nginx/sites-available/{{ http_domain }}.conf
   register: config_res
+  tags:
+    - deploy
+    - https-site
 
 - name: Enable NGINX host config
   file:
     state: link
     src: /etc/nginx/sites-available/{{ http_domain }}.conf
     dest: /etc/nginx/sites-enabled/{{ http_domain }}.conf
+  tags:
+    - deploy
+    - https-site
 
 - name: Reload NGINX
   service:
     name: nginx
     state: reloaded
   when: config_res.changed or certificate_res.changed
+  tags:
+    - deploy
+    - https-site

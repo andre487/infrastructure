@@ -35,6 +35,14 @@
     - configuration
     - docker
 
+- name: Install docker-compose for Ansible
+  pip:
+    name: docker-compose
+    state: present
+  tags:
+    - configuration
+    - docker
+
 - name: Create data directory
   file:
     name: /docker_data

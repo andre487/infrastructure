@@ -1,0 +1,13 @@
+[Unit]
+Description=Docker compose service {{ http_domain }}
+After=network-online.target docker.service
+Requires=network-online.target docker.service
+ConditionPathExists={{ project_path_ }}
+
+[Service]
+Type=simple
+ExecStart=/bin/bash -c "docker compose -f {{ project_path_ }}/docker-compose.yml up --remove-orphans"
+ExecStop=/bin/bash -c "docker compose -f {{ project_path_ }}/docker-compose.yml stop || true"
+
+[Install]
+WantedBy=multi-user.target

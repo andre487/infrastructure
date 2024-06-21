@@ -28,16 +28,9 @@
   apt:
     name:
       - docker-ce
+      - docker-compose
       - docker-compose-plugin
       - python3-docker
-    state: present
-  tags:
-    - configuration
-    - docker
-
-- name: Install docker-compose for Ansible
-  pip:
-    name: docker-compose
     state: present
   tags:
     - configuration

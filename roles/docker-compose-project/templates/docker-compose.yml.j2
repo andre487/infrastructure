@@ -6,22 +6,30 @@ services:
       - '127.0.0.1:{{ service_port }}:{{ internal_port }}'
     depends_on:
       - mongodb
+
+    {% if project_environment_ %}
+
     environment:
       {% for var_def in project_environment_ %}
       - {{ var_def }}
       {% endfor %}
+    {% endif %}
 
   mongodb:
     restart: always
     user: root
     image: 'docker.io/mongodb/mongodb-community-server:{{ mongo_tag_ }}'
+    {% if mongo_environment_ %}
+
     environment:
-      {% for var_def in project_environment_ %}
-      - {{ var_def }}
+      {% for var_def in mongo_environment_ %}
+        - {{ var_def }}
       {% endfor %}
+    {% endif %}
 
     volumes:
       - {{ mongo_db_path_ }}:/data/db:rw
       {% if mongo_config_path_ %}
+
       - {{ mongo_config_path_ }}:/data/configdb:rw
       {% endif %}

@@ -1,0 +1,13 @@
+[Unit]
+Description=DumbProxy log monitor
+After=dumbproxy.service
+Requires=dumbproxy.service
+
+[Service]
+Type=simple
+Restart=always
+ExecStart=/opt/dumbproxy-log-monitor/bin/dumbproxy-log-monitor -dbPath /opt/dumbproxy-log-monitor/var/main.db -mailerConfig /opt/dumbproxy-log-monitor/etc/mailer.json -reportMail '{{ admin_email }}' -reportTime '03:03:00'
+WorkingDirectory=/opt/dumbproxy-log-monitor/bin
+
+[Install]
+WantedBy=multi-user.target

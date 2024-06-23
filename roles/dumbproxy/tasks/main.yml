@@ -36,7 +36,7 @@
     - configuration
     - dumbproxy
 
-- name: Create bin link
+- name: Create dumbproxy bin link
   file:
     src: '/opt/src/dumbproxy/dumbproxy'
     dest: '/usr/local/bin/dumbproxy'
@@ -54,7 +54,7 @@
     - configuration
     - dumbproxy
 
-- name: Setup users
+- name: Setup dumbproxy users
   htpasswd:
     path: /etc/dumbproxy.htpasswd
     name: '{{ item.name }}'
@@ -65,7 +65,7 @@
     - configuration
     - dumbproxy
 
-- name: Create systemd config
+- name: Create dumbproxy systemd config
   template:
     src: templates/dumbproxy.service.j2
     dest: /etc/systemd/system/dumbproxy.service
@@ -86,6 +86,7 @@
   systemd:
     name: dumbproxy
     state: started
+    enabled: true
   tags:
     - configuration
     - dumbproxy
@@ -106,3 +107,90 @@
   tags:
     - configuration
     - dumbproxy
+
+- name: Create dumbproxy-log-monitor dirs
+  file:
+    name: '{{ item }}'
+    state: directory
+  with_items:
+    - /opt/dumbproxy-log-monitor/bin
+    - /opt/dumbproxy-log-monitor/etc
+    - /opt/dumbproxy-log-monitor/var
+    - /opt/dumbproxy-log-monitor/data
+  tags:
+    - configuration
+    - dumbproxy
+    - dumbproxy-log-monitor
+
+- name: Download dumbproxy-log-monitor bundle
+  get_url:
+    url: 'https://github.com/andre487/dumbproxy-log-monitor/releases/download/{{ dumbproxy_log_monitor_version }}/dumbproxy-log-monitor-linux-x86_64.tar.gz'
+    dest: /opt/dumbproxy-log-monitor/data/bundle.tar.gz
+  tags:
+    - configuration
+    - dumbproxy
+    - dumbproxy-log-monitor
+
+- name: Unpack dumbproxy-log-monitor bundle
+  unarchive:
+    src: /opt/dumbproxy-log-monitor/data/bundle.tar.gz
+    remote_src: true
+    dest: /opt/dumbproxy-log-monitor/bin
+  register: unpack_dumbproxy_log_monitor
+  tags:
+    - configuration
+    - dumbproxy
+    - dumbproxy-log-monitor
+
+- name: Create dumbproxy-log-monitor secrets
+  copy:
+    content: '{{ item.content }}'
+    dest: '/opt/dumbproxy-log-monitor/etc/{{ item.path }}'
+    mode: 0600
+  with_items:
+    - path: mailer.json
+      content: '{{ mailer_config_json }}'
+  tags:
+    - configuration
+    - dumbproxy
+    - dumbproxy-log-monitor
+
+- name: Create dumbproxy-log-monitor systemd config
+  template:
+    src: templates/dumbproxy-log-monitor.service.j2
+    dest: /etc/systemd/system/dumbproxy-log-monitor.service
+  register: dumbproxy_monitor_systemd_config
+  tags:
+    - configuration
+    - dumbproxy
+    - dumbproxy-log-monitor
+
+- name: Reload systemd
+  shell:
+    cmd: systemctl daemon-reload
+  when: dumbproxy_monitor_systemd_config.changed
+  tags:
+    - configuration
+    - dumbproxy
+    - dumbproxy-log-monitor
+
+- name: Start dumbproxy-log-monitor
+  systemd:
+    name: dumbproxy-log-monitor
+    state: started
+    enabled: true
+  tags:
+    - configuration
+    - dumbproxy
+    - dumbproxy-log-monitor
+
+- name: Restart dumbproxy-log-monitor
+  systemd:
+    name: dumbproxy-log-monitor
+    state: restarted
+    enabled: true
+  when: dumbproxy_monitor_systemd_config.changed or unpack_dumbproxy_log_monitor.changed
+  tags:
+    - configuration
+    - dumbproxy
+    - dumbproxy-log-monitor

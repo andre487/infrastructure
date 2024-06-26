@@ -6,7 +6,7 @@ Requires=dumbproxy.service
 [Service]
 Type=simple
 Restart=always
-ExecStart=/opt/dumbproxy-log-monitor/bin/dumbproxy-log-monitor -dbPath /opt/dumbproxy-log-monitor/var/main.db -mailerConfig /opt/dumbproxy-log-monitor/etc/mailer.json -reportMail '{{ admin_email }}' -reportTime '03:03:00' -scheduleInterval 5s
+ExecStart=/opt/dumbproxy-log-monitor/bin/dumbproxy-log-monitor -dbDir /opt/dumbproxy-log-monitor/var/dbV2 -mailerConfig /opt/dumbproxy-log-monitor/etc/mailer.json -reportMail '{{ report_email }}' -reportTime '03:03:00'
 WorkingDirectory=/opt/dumbproxy-log-monitor/bin
 Environment="LOG_LEVEL=debug"
 

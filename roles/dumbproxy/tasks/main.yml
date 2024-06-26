@@ -122,6 +122,17 @@
     - dumbproxy
     - dumbproxy-log-monitor
 
+- name: Check that obsolete files are absent
+  file:
+    name: '{{ item }}'
+    state: absent
+  with_items:
+    - /opt/dumbproxy-log-monitor/var/main.db
+  tags:
+    - configuration
+    - dumbproxy
+    - dumbproxy-log-monitor
+
 - name: Download dumbproxy-log-monitor bundle
   get_url:
     url: 'https://github.com/andre487/dumbproxy-log-monitor/releases/download/{{ dumbproxy_log_monitor_version }}/dumbproxy-log-monitor-linux-x86_64.tar.gz'

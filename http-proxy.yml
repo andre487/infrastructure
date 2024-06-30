@@ -1,0 +1,12 @@
+- hosts: http_proxy
+  become: true
+  become_method: sudo
+  environment:
+    DEBIAN_FRONTEND: noninteractive
+
+  roles:
+    - system
+    - firewall
+    - logrotate
+    - squid
+    - fail2ban

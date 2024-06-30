@@ -1,0 +1,18 @@
+http_port 80
+shutdown_lifetime 10 seconds
+visible_hostname {{ http_domain }}
+
+auth_param basic program /usr/lib/squid/basic_ncsa_auth /etc/squid/users
+auth_param basic realm Outworld
+
+acl users proxy_auth REQUIRED
+http_access allow users
+http_access deny all
+
+forwarded_for delete
+via off
+follow_x_forwarded_for deny all
+request_header_access X-Forwarded-For deny all
+
+cache deny all
+cache_dir null /tmp

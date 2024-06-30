@@ -1,0 +1,60 @@
+- name: Install requirements
+  apt:
+    update_cache: true
+    cache_valid_time: 1800
+    name:
+      - python3-passlib
+      - libpam-pwdfile
+    state: present
+  tags:
+    - configuration
+    - dumbproxy
+
+- name: Install squid
+  apt:
+    update_cache: true
+    cache_valid_time: 1800
+    name:
+      - squid
+    state: present
+  tags:
+    - configuration
+    - squid
+
+- name: Create squid users
+  htpasswd:
+    path: /etc/squid/users
+    name: '{{ item.name }}'
+    password: '{{ item.password | string }}'
+  loop: '{{ proxy_users }}'
+  register: squid_users
+  tags:
+    - configuration
+    - squid
+
+- name: Configure squid
+  template:
+    src: templates/squid.conf.j2
+    dest: /etc/squid/squid.conf
+  register: squid_config
+  tags:
+    - configuration
+    - squid
+
+- name: Start squid
+  systemd:
+    name: squid
+    state: started
+    enabled: true
+  tags:
+    - configuration
+    - squid
+
+- name: Reload squid
+  systemd:
+    name: squid
+    state: reloaded
+  when: squid_users.changed or squid_config.changed
+  tags:
+    - configuration
+    - squid

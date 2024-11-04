@@ -23,22 +23,21 @@
     - clamav-mirror
 
 - name: Install cvdupdate
-  pip:
-    name: cvdupdate
+  apt:
+    name: clamav-cvdupdate
     state: present
-    executable: pip3
   register: clamav_cvdupdate_res
   tags:
     - clamav-mirror
 
 - name: Setup cvdupdate dir
-  shell: cvd config set --dbdir /var/www/{{ clamav_domain }}
+  shell: cvdupdate config set --dbdir /var/www/{{ clamav_domain }}
   when: clamav_cvdupdate_res.changed
   tags:
     - clamav-mirror
 
 - name: First update ClamAV DB
-  shell: cvd update
+  shell: cvdupdate update
   when: clamav_cvdupdate_res.changed
   tags:
     - clamav-mirror

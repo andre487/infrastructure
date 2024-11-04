@@ -31,6 +31,7 @@
         cache_valid_time: 300
         install_recommends: false
         upgrade: dist
+        lock_timeout: 120
 
     - name: Install basic software
       apt:
@@ -97,5 +98,5 @@
 
     - name: Reload SSH
       service:
-        name: sshd
+        name: ssh
         state: reloaded

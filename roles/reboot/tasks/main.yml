@@ -1,0 +1,15 @@
+- name: Setup periodical reboot
+  template:
+    src: templates/reboot.cron
+    dest: /etc/cron.d/per-reboot
+  register: setup_reboot_result
+  tags:
+    - setup-reboot
+
+- name: Restart Cron
+  service:
+    name: cron
+    state: restarted
+  when: setup_reboot_result.changed
+  tags:
+    - setup-reboot

@@ -10,3 +10,4 @@
     - logrotate
     - dumbproxy
     - fail2ban
+    - reboot

@@ -10,3 +10,4 @@
     - logrotate
     - squid
     - fail2ban
+    - reboot

@@ -22,16 +22,20 @@
       timezone:
         name: UTC
 
+    - name: Apt update
+      apt:
+        update_cache: true
+        cache_valid_time: 300
+
     - name: Apt upgrade
+      apt:
+        upgrade: dist
+
+    - name: Apt cleanup
       apt:
         clean: true
         autoclean: true
         autoremove: true
-        update_cache: true
-        cache_valid_time: 300
-        install_recommends: false
-        upgrade: dist
-        lock_timeout: 120
 
     - name: Install basic software
       apt:

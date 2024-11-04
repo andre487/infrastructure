@@ -1,0 +1,3 @@
+- name: Users JSON
+  debug:
+    msg: '{{ proxy_users_db | users_json_create }}'

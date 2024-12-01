@@ -1,4 +1,4 @@
-- hosts: http_proxy
+- hosts: squid_proxy
   become: true
   become_method: sudo
   environment:

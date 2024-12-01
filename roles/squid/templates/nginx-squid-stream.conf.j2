@@ -1,0 +1,13 @@
+stream {
+    upstream _squid {
+        server [::1]:3128;
+    }
+
+    server {
+        listen 8080;
+
+        proxy_pass _squid;
+
+        include /etc/nginx/nginx-squid-https-include.conf*;
+    }
+}

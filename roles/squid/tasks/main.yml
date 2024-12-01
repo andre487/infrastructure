@@ -1,22 +1,17 @@
-- name: Install requirements
-  apt:
-    update_cache: true
-    cache_valid_time: 1800
-    name:
-      - python3-passlib
-      - libpam-pwdfile
-    state: present
-  tags:
-    - configuration
-    - dumbproxy
-
-- name: Install squid
+- name: Install software
   apt:
     update_cache: true
     cache_valid_time: 1800
     name:
       - squid
+      - nginx
+      - libnginx-mod-stream
+      - certbot
+      - python3-certbot-nginx
+      - python3-passlib
+      - libpam-pwdfile
     state: present
+  register: squid_software_install
   tags:
     - configuration
     - squid
@@ -26,6 +21,7 @@
     path: /etc/squid/users
     name: '{{ item.name }}'
     password: '{{ item.password | string }}'
+    mode: 0600
   loop: '{{ proxy_users }}'
   register: squid_users
   tags:
@@ -54,7 +50,98 @@
   systemd:
     name: squid
     state: reloaded
-  when: squid_users.changed or squid_config.changed
+  when: squid_software_install.changed or squid_users.changed or squid_config.changed
+  tags:
+    - configuration
+    - squid
+
+- name: Configure NGINX default
+  template:
+    src: templates/nginx-default.conf.j2
+    dest: /etc/nginx/sites-available/default
+  register: squid_nginx_default
+  tags:
+    - configuration
+    - squid
+
+- name: Configure NGINX stream
+  template:
+    src: templates/nginx-squid-stream.conf.j2
+    dest: /etc/nginx/nginx-squid-stream.conf
+  register: squid_nginx_stream
+  tags:
+    - configuration
+    - squid
+
+- name: Include NGINX stream config
+  lineinfile:
+    dest: /etc/nginx/nginx.conf
+    line: 'include /etc/nginx/nginx-squid-stream.conf;'
+    state: present
+    create: yes
+    insertafter: EOF
+  register: squid_nginx_include
+  tags:
+    - configuration
+    - squid
+
+- name: Reload NGINX
+  service:
+    name: nginx
+    state: reloaded
+  when: squid_nginx_default.changed or squid_nginx_stream.changed or squid_nginx_include.changed
+  tags:
+    - configuration
+    - squid
+
+- name: Copy static files
+  copy:
+    src: '{{ item }}'
+    dest: /var/www/html
+    mode: 644
+  with_fileglob:
+    - 'static_files/*'
+  tags:
+    - deploy
+    - https-site
+
+- name: Check SSL certificates
+  stat:
+    path: /etc/letsencrypt/live/{{ http_domain }}
+  register: squid_ssl_result
+  tags:
+    - deploy
+    - https-site
+
+- name: Install certificate
+  shell: |
+    certbot --nginx \
+      --domains {{ http_domain }} \
+      --non-interactive \
+      --agree-tos \
+      --https-port 8443 \
+      --email '{{ cert_email }}'
+  when: squid_ssl_result.stat.exists == False
+  register: squid_ssl_new_cert
+  tags:
+    - configuration
+    - squid
+
+- name: Configure NGINX HTTP stream include
+  template:
+    src: templates/nginx-squid-https-include.conf.j2
+    dest: /etc/nginx/nginx-squid-https-include.conf
+  when: squid_ssl_result.stat.exists == True or squid_ssl_new_cert.changed
+  register: squid_nginx_https_stream
+  tags:
+    - configuration
+    - squid
+
+- name: Reload NGINX
+  service:
+    name: nginx
+    state: reloaded
+  when: squid_nginx_https_stream.changed
   tags:
     - configuration
     - squid

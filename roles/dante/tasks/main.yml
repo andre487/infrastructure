@@ -1,0 +1,58 @@
+- name: Install software
+  apt:
+    update_cache: true
+    cache_valid_time: 1800
+    name:
+      - dante-server
+      - libpam-pwdfile
+      - python3-passlib
+    state: present
+  register: dante_software_install
+  tags:
+    - configuration
+    - dante
+
+- name: Create dante users
+  template:
+    src: templates/dante.passwd.j2
+    dest: /etc/dante.passwd
+  register: dante_users
+  tags:
+    - configuration
+    - dante
+
+- name: Create dante PAM file
+  template:
+    src: templates/sockd.j2
+    dest: /etc/pam.d/sockd
+  register: dante_pam
+  tags:
+    - configuration
+    - dante
+
+- name: Configure dante
+  template:
+    src: templates/danted.conf.j2
+    dest: /etc/danted.conf
+  register: dante_config
+  tags:
+    - configuration
+    - dante
+
+- name: Start dante
+  systemd:
+    name: danted
+    state: started
+    enabled: true
+  tags:
+    - configuration
+    - dante
+
+- name: Restart dante
+  systemd:
+    name: danted
+    state: restarted
+  when: dante_software_install.changed or dante_users.changed or dante_pam.changed or dante_config.changed
+  tags:
+    - configuration
+    - dante

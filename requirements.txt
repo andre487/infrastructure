@@ -1,4 +1,4 @@
-ansible==9.1.0
+ansible==10.7.0
 ansible-core==2.17.7
 bcrypt==4.2.0
 passlib==1.7.4

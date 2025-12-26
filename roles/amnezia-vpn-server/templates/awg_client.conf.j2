@@ -1,0 +1,20 @@
+[Interface]
+PrivateKey = {{ item.1.peer_priv_key }}
+# Public Key: {{ item.1.peer_pub_key }}
+Address = {{ item.1.client_ip }}
+DNS = 83.220.169.155
+Jc = {{ item.0.jc }}
+Jmin = {{ item.0.j_min }}
+Jmax = {{ item.0.j_max }}
+S1 = {{ item.0.s1 }}
+S2 = {{ item.0.s2 }}
+H1 = {{ item.0.h1 }}
+H2 = {{ item.0.h2 }}
+H3 = {{ item.0.h3 }}
+H4 = {{ item.0.h4 }}
+
+[Peer]
+AllowedIPs = {{ item.1.allowed_ips }}
+Endpoint = {{ http_domain }}:{{ item.0.listen_port }}
+PersistentKeepalive = 60
+PublicKey = {{ item.0.server_pub_key }}

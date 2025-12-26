@@ -62,6 +62,31 @@
     - amnezia-vpn
     - server
 
+- name: Build allowed_services from interface config
+  ansible.builtin.set_fact:
+    allowed_services_from_ifaces: >-
+      {{(allowed_services_from_ifaces | default([])) + [ { 'rule': 'allow', 'proto': 'udp', 'to_port': item.listen_port } ]}}
+  loop: "{{ awg_interfaces }}"
+  tags:
+    - amnezia-vpn
+    - server
+
+- name: Merge allowed services
+  ansible.builtin.set_fact:
+    allowed_services_merged: >-
+      {{
+        ((allowed_services | default([ { 'rule': 'limit', 'proto': 'tcp', 'to_port': 22 } ])) + (allowed_services_from_ifaces | default([])))
+      }}
+  tags:
+    - amnezia-vpn
+    - server
+
+- name: Apply firewall role
+  ansible.builtin.include_role:
+    name: firewall
+  vars:
+    allowed_services: "{{ allowed_services_merged }}"
+
 - name: Ensure client configs dir
   delegate_to: localhost
   become: false

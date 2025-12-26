@@ -3,7 +3,6 @@
 
   roles:
     - system
-    # - firewall
     - fail2ban
     - amnezia-vpn-server
     - logrotate

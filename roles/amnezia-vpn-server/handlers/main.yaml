@@ -3,10 +3,10 @@
     name: awg-quick@{{ item.name }}
     enabled: true
     state: started
-  with_items: "{{ awg_interfaces }}"
+  loop: "{{ awg_interfaces }}"
 
 - name: Restart AWG services
   ansible.builtin.systemd:
     name: awg-quick@{{ item.name }}
     state: restarted
-  with_items: "{{ awg_interfaces }}"
+  loop: "{{ awg_interfaces }}"

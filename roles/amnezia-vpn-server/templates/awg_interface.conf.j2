@@ -16,3 +16,11 @@ H4 = {{ item.h4 }}
 PostUp = iptables -A INPUT -p udp --dport {{ item.listen_port }} -m conntrack --ctstate NEW -j ACCEPT --wait 10 --wait-interval 50; iptables -A FORWARD -i {{ server_iface }} -o {{ item.name }} -j ACCEPT --wait 10 --wait-interval 50; iptables -A FORWARD -i {{ item.name }} -j ACCEPT --wait 10 --wait-interval 50; iptables -t nat -A POSTROUTING -o {{ server_iface }} -j MASQUERADE --wait 10 --wait-interval 50; ip6tables -A FORWARD -i {{ item.name }} -j ACCEPT --wait 10 --wait-interval 50; ip6tables -t nat -A POSTROUTING -o {{ server_iface }} -j MASQUERADE --wait 10 --wait-interval 50
 
 PostDown = iptables -D INPUT -p udp --dport {{ item.listen_port }} -m conntrack --ctstate NEW -j ACCEPT --wait 10 --wait-interval 50; iptables -D FORWARD -i {{ server_iface }} -o {{ item.name }} -j ACCEPT --wait 10 --wait-interval 50; iptables -D FORWARD -i {{ item.name }} -j ACCEPT --wait 10 --wait-interval 50; iptables -t nat -D POSTROUTING -o {{ server_iface }} -j MASQUERADE --wait 10 --wait-interval 50; ip6tables -D FORWARD -i {{ item.name }} -j ACCEPT --wait 10 --wait-interval 50; ip6tables -t nat -D POSTROUTING -o {{ server_iface }} -j MASQUERADE --wait 10 --wait-interval 50
+
+{% for peer in item.peers: %}
+[Peer]
+# Name: {{ peer.name }}
+# Private Key: {{ peer.peer_priv_key }}
+PublicKey = {{ peer.peer_pub_key }}
+AllowedIPs = {{ peer.allowed_ips }}
+{% endfor %}

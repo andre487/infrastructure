@@ -1,0 +1,18 @@
+[Interface]
+PrivateKey = {{ item.server_priv_key }}
+# Public Key: {{ item.server_pub_key }}
+Address = {{ item.address }}
+ListenPort = {{ item.listen_port }}
+Jc = {{ item.jc }}
+Jmin = {{ item.j_min }}
+Jmax = {{ item.j_max }}
+S1 = {{ item.s1 }}
+S2 = {{ item.s2 }}
+H1 = {{ item.h1 }}
+H2 = {{ item.h2 }}
+H3 = {{ item.h3 }}
+H4 = {{ item.h4 }}
+
+PostUp = iptables -A INPUT -p udp --dport {{ item.listen_port }} -m conntrack --ctstate NEW -j ACCEPT --wait 10 --wait-interval 50; iptables -A FORWARD -i {{ server_iface }} -o {{ item.name }} -j ACCEPT --wait 10 --wait-interval 50; iptables -A FORWARD -i {{ item.name }} -j ACCEPT --wait 10 --wait-interval 50; iptables -t nat -A POSTROUTING -o {{ server_iface }} -j MASQUERADE --wait 10 --wait-interval 50; ip6tables -A FORWARD -i {{ item.name }} -j ACCEPT --wait 10 --wait-interval 50; ip6tables -t nat -A POSTROUTING -o {{ server_iface }} -j MASQUERADE --wait 10 --wait-interval 50
+
+PostDown = iptables -D INPUT -p udp --dport {{ item.listen_port }} -m conntrack --ctstate NEW -j ACCEPT --wait 10 --wait-interval 50; iptables -D FORWARD -i {{ server_iface }} -o {{ item.name }} -j ACCEPT --wait 10 --wait-interval 50; iptables -D FORWARD -i {{ item.name }} -j ACCEPT --wait 10 --wait-interval 50; iptables -t nat -D POSTROUTING -o {{ server_iface }} -j MASQUERADE --wait 10 --wait-interval 50; ip6tables -D FORWARD -i {{ item.name }} -j ACCEPT --wait 10 --wait-interval 50; ip6tables -t nat -D POSTROUTING -o {{ server_iface }} -j MASQUERADE --wait 10 --wait-interval 50

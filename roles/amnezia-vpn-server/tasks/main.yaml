@@ -1,0 +1,55 @@
+- name: Add AmneziaWG repository
+  ansible.builtin.apt_repository:
+    repo: ppa:amnezia/ppa
+  tags:
+    - amnezia-vpn
+
+
+- name: Update APT caches
+  ansible.builtin.apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  tags:
+    - amnezia-vpn
+
+- name: Install AmneziaWG
+  ansible.builtin.apt:
+    name: amneziawg
+    state: present
+  tags:
+    - amnezia-vpn
+
+- name: Get main IP Link
+  ansible.builtin.command: |
+    bash -c '
+    set -eo pipefail
+    ip link show | grep "<BROADCAST" | grep "state UP" | head -n1 | cut -d":" -f2 | awk "{print $1}"
+    '
+  register: server_iface_cmd_res
+  changed_when: false
+  tags:
+    - amnezia-vpn
+
+- name: Get main server interface
+  ansible.builtin.set_fact:
+    server_iface: "{{ server_iface_cmd_res.stdout | trim }}"
+
+- name: Ensure interfaces dir
+  ansible.builtin.file:
+    state: directory
+    path: /etc/amnezia/amneziawg
+    mode: 0700
+  tags:
+    - amnezia-vpn
+
+- name: Create interfaces
+  ansible.builtin.template:
+    src: templates/awg_interface.conf.j2
+    dest: /etc/amnezia/amneziawg/{{ item.name }}.conf
+    mode: 0600
+  with_items: "{{ awg_interfaces }}"
+  notify:
+    - Enable AWG services
+    - Restart AWG services
+  tags:
+    - amnezia-vpn

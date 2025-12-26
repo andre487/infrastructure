@@ -5,7 +5,6 @@
     - amnezia-vpn
     - server
 
-
 - name: Update APT caches
   ansible.builtin.apt:
     update_cache: yes
@@ -55,7 +54,7 @@
     src: templates/awg_interface.conf.j2
     dest: /etc/amnezia/amneziawg/{{ item.name }}.conf
     mode: 0600
-  with_items: "{{ awg_interfaces }}"
+  loop: "{{ awg_interfaces }}"
   notify:
     - Enable AWG services
     - Restart AWG services
@@ -63,7 +62,7 @@
     - amnezia-vpn
     - server
 
-- name: Prepare client configs dir
+- name: Ensure client configs dir
   delegate_to: localhost
   become: false
   ansible.builtin.file:
@@ -72,7 +71,6 @@
   tags:
     - amnezia-vpn
     - client
-
 
 - name: Generate client configs
   delegate_to: localhost

@@ -104,7 +104,7 @@
   become: false
   ansible.builtin.template:
     src: templates/awg_client.conf.j2
-    dest: "{{ playbook_dir }}/generated/amnezia-vpn-clients/{{ item.0.name }}-{{ item.1.name }}.conf"
+    dest: "{{ playbook_dir }}/generated/amnezia-vpn-clients/{{ http_domain }}-{{ item.0.name }}-{{ item.1.name }}.conf"
   loop: "{{ awg_interfaces | subelements('peers') }}"
   tags:
     - amnezia-vpn

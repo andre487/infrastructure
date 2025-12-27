@@ -1,0 +1,10 @@
+- hosts: amnezia_vpn_access_points
+  become: true
+
+  roles:
+    - system
+    - fail2ban
+    - raspberry-pi
+    - amnezia-vpn-client
+    - logrotate
+    - firewall

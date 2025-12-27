@@ -1,0 +1,25 @@
+- name: Install Raspberry PI software
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+    name:
+      - linux-image-raspi
+      - linux-headers-raspi
+    state: latest
+  notify: Reboot host
+  register: raspberry_pi_basic_soft_install
+  tags:
+    - raspberry-pi
+    - configuration
+    - system
+    - basic-software
+
+- name: Reboot host
+  ansible.builtin.reboot:
+    reboot_timeout: 3600
+  when: raspberry_pi_basic_soft_install.changed
+  tags:
+    - raspberry-pi
+    - configuration
+    - system
+    - basic-software

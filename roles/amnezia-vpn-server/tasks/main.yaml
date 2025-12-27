@@ -17,6 +17,7 @@
   ansible.builtin.apt:
     name: amneziawg
     state: present
+  notify: Reload systemd
   tags:
     - amnezia-vpn
     - server
@@ -56,6 +57,7 @@
     mode: 0600
   loop: "{{ awg_interfaces }}"
   notify:
+    - Reload systemd
     - Enable AWG services
     - Restart AWG services
   tags:

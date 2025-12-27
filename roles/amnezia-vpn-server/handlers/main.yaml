@@ -10,3 +10,7 @@
     name: awg-quick@{{ item.name }}
     state: restarted
   loop: "{{ awg_interfaces }}"
+
+- name: Reboot host
+  ansible.builtin.reboot:
+    reboot_timeout: 3600

@@ -107,3 +107,14 @@
   tags:
     - amnezia-vpn
     - client
+
+- name: Enable forwarding
+  ansible.builtin.lineinfile:
+    path: /etc/sysctl.d/00-amnezia.conf
+    line: 'net.ipv4.ip_forward = 1'
+    state: present
+    create: true
+  notify: Reboot host
+  tags:
+    - amnezia-vpn
+    - server

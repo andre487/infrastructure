@@ -54,7 +54,6 @@
         name: '{{ remote_user }}'
         password: '!'
         password_lock: true
-        shell: /bin/zsh
         state: present
 
     - name: SSH copy ID
@@ -93,12 +92,6 @@
         dest: /etc/ssh/sshd_config
         line: 'PasswordAuthentication no'
         state: present
-
-    - name: Add .zshrc
-      copy:
-        content: ''
-        dest: '/home/{{ remote_user }}/.zshrc'
-        owner: '{{ remote_user }}'
 
     - name: Reload SSH
       service:

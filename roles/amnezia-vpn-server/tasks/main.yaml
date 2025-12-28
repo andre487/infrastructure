@@ -2,16 +2,14 @@
   ansible.builtin.apt_repository:
     repo: ppa:amnezia/ppa
   tags:
-    - amnezia-vpn
-    - server
+    - amnezia-vpn-server
 
 - name: Update APT caches
   ansible.builtin.apt:
     update_cache: yes
     cache_valid_time: 3600
   tags:
-    - amnezia-vpn
-    - server
+    - amnezia-vpn-server
 
 - name: Install AmneziaWG
   ansible.builtin.apt:
@@ -19,8 +17,7 @@
     state: present
   notify: Reload systemd
   tags:
-    - amnezia-vpn
-    - server
+    - amnezia-vpn-server
 
 - name: Get main IP Link
   ansible.builtin.command: |
@@ -31,15 +28,13 @@
   register: server_iface_cmd_res
   changed_when: false
   tags:
-    - amnezia-vpn
-    - server
+    - amnezia-vpn-server
 
 - name: Get main server interface
   ansible.builtin.set_fact:
     server_iface: "{{ server_iface_cmd_res.stdout | trim }}"
   tags:
-    - amnezia-vpn
-    - server
+    - amnezia-vpn-server
 
 - name: Ensure interfaces dir
   ansible.builtin.file:
@@ -47,8 +42,7 @@
     path: /etc/amnezia/amneziawg
     mode: 0700
   tags:
-    - amnezia-vpn
-    - server
+    - amnezia-vpn-server
 
 - name: Create interfaces
   ansible.builtin.template:
@@ -61,8 +55,7 @@
     - Enable AWG services
     - Restart AWG services
   tags:
-    - amnezia-vpn
-    - server
+    - amnezia-vpn-server
 
 - name: Build allowed_services from interface config
   ansible.builtin.set_fact:
@@ -70,8 +63,7 @@
       {{(allowed_services_from_ifaces | default([])) + [ { 'rule': 'allow', 'proto': 'udp', 'to_port': item.listen_port } ]}}
   loop: "{{ awg_interfaces }}"
   tags:
-    - amnezia-vpn
-    - server
+    - amnezia-vpn-server
 
 - name: Merge allowed services
   ansible.builtin.set_fact:
@@ -80,14 +72,15 @@
         ((allowed_services | default([ { 'rule': 'limit', 'proto': 'tcp', 'to_port': 22 } ])) + (allowed_services_from_ifaces | default([])))
       }}
   tags:
-    - amnezia-vpn
-    - server
+    - amnezia-vpn-server
 
 - name: Apply firewall role
   ansible.builtin.include_role:
     name: firewall
   vars:
     allowed_services: "{{ allowed_services_merged }}"
+  tags:
+    - amnezia-vpn-server
 
 - name: Ensure client configs dir
   delegate_to: localhost
@@ -96,8 +89,7 @@
     path: "{{ playbook_dir }}/generated/amnezia-vpn-clients"
     state: directory
   tags:
-    - amnezia-vpn
-    - client
+    - amnezia-vpn-server
 
 - name: Generate client configs
   delegate_to: localhost
@@ -107,16 +99,4 @@
     dest: "{{ playbook_dir }}/generated/amnezia-vpn-clients/{{ http_domain }}-{{ item.0.name }}-{{ item.1.name }}.conf"
   loop: "{{ awg_interfaces | subelements('peers') }}"
   tags:
-    - amnezia-vpn
-    - client
-
-- name: Enable forwarding
-  ansible.builtin.lineinfile:
-    path: /etc/sysctl.d/00-amnezia.conf
-    line: 'net.ipv4.ip_forward = 1'
-    state: present
-    create: true
-  notify: Reboot host
-  tags:
-    - amnezia-vpn
-    - server
+    - amnezia-vpn-server

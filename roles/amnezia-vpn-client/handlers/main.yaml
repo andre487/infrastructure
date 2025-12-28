@@ -12,7 +12,3 @@
   ansible.builtin.systemd:
     name: awg-quick@{{ peer_interface.iface.name }}
     state: restarted
-
-- name: Reboot host
-  ansible.builtin.reboot:
-    reboot_timeout: 3600

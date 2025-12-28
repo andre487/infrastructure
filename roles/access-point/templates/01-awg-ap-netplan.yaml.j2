@@ -1,0 +1,15 @@
+network:
+  version: 2
+  renderer: networkd
+
+  ethernets:
+    {{ server_main_interface }}:
+      dhcp4: true
+      optional: true
+    {{ server_wifi_iface }}:
+      dhcp4: true
+      dhcp6: false
+      addresses:
+        - 192.168.50.1/24
+      optional: true
+      link-local: []

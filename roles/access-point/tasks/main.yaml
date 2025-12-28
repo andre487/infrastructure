@@ -1,0 +1,142 @@
+- name: Install software
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+    state: present
+    name:
+      - iw
+      - hostapd
+      - kea-dhcp4-server
+      - netfilter-persistent
+      - netplan.io
+  tags:
+    - access-point
+
+- name: Get main IP Link
+  ansible.builtin.command: |
+    bash -c '
+    set -eo pipefail
+    ip link show | grep "<BROADCAST" | grep "state UP" | head -n1 | cut -d":" -f2
+    '
+  register: server_iface_cmd_res
+  changed_when: false
+  tags:
+    - access-point
+
+- name: Get server main interface
+  ansible.builtin.set_fact:
+    server_main_interface: "{{ server_iface_cmd_res.stdout | trim }}"
+  tags:
+    - access-point
+
+- name: Get server out interface
+  ansible.builtin.set_fact:
+    ap_out_iface: "{{ server_main_interface }}"
+  when: ap_out_iface is not defined
+  tags:
+    - access-point
+
+- name: Get Wi-Fi IP Link
+  ansible.builtin.command: |
+    bash -c '
+    set -eo pipefail
+    ip link show | grep "wlan" | head -n1 | cut -d":" -f2
+    '
+  register: server_iface_cmd_res
+  changed_when: false
+  tags:
+    - access-point
+
+- name: Get Wi-Fi server interface
+  ansible.builtin.set_fact:
+    server_wifi_iface: "{{ server_iface_cmd_res.stdout | trim }}"
+  tags:
+    - access-point
+
+- name: Setup iface config
+  ansible.builtin.template:
+    src: templates/iface_hostapd.conf.j2
+    dest: /etc/hostapd/hostapd.conf
+  notify: Restart hostapd
+  tags:
+    - access-point
+
+- name: Ensure systemd hostapd dir exists
+  become: true
+  ansible.builtin.file:
+    path: /etc/systemd/system/hostapd.service.d
+    state: directory
+  tags:
+    - access-point
+
+- name: Install hostapd systemd override
+  become: true
+  ansible.builtin.copy:
+    src: templates/hostapd-override.conf
+    dest: /etc/systemd/system/hostapd.service.d/override.conf
+  notify:
+    - Reload systemd
+    - Restart hostapd
+  tags:
+    - access-point
+
+- name: Enable hostapd
+  ansible.builtin.systemd:
+    name: hostapd
+    enabled: true
+    masked: false
+    state: started
+  tags:
+    - access-point
+
+- name: Create IP rules.v4
+  ansible.builtin.template:
+    src: templates/rules.v4.j2
+    dest: /etc/iptables/rules.v4
+    mode: 0644
+  notify: Apply iptables rules
+  tags:
+    - access-point
+
+- name: Ensure netfilter-persistent enabled and started
+  ansible.builtin.systemd:
+    name: netfilter-persistent
+    enabled: true
+    state: started
+  tags:
+    - access-point
+
+- name: Create DHCP server config
+  ansible.builtin.template:
+    src: templates/kea-dhcp4.conf.j2
+    dest: /etc/kea/kea-dhcp4.conf
+  notify: Restart DHCP
+  tags:
+    - access-point
+
+- name: Enable DHCP
+  ansible.builtin.systemd:
+    name: kea-dhcp4-server
+    enabled: true
+    state: started
+  tags:
+    - access-point
+
+- name: Deploy netplan config
+  become: true
+  ansible.builtin.template:
+    src: templates/01-awg-ap-netplan.yaml.j2
+    dest: /etc/netplan/01-awg-ap.yaml
+    mode: '600'
+  notify: Apply netplan
+  tags:
+    - access-point
+
+- name: Ensure systemd-networkd is enabled and running
+  become: true
+  ansible.builtin.systemd:
+    name: systemd-networkd
+    enabled: true
+    state: started
+  tags:
+    - access-point

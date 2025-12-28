@@ -34,7 +34,7 @@
     _peer_json: |
       {% set ns = namespace(out={}) %}
       {% for item in awg_interfaces %}
-        {% if item.name == awg_choosen_interface %}
+        {% if item.name == awg_chosen_interface %}
           {% for item_peer in item.peers %}
             {% if item_peer.name == awg_choosen_peer %}
               {% set ns.out = {'server_addr': awg_server_addr, 'iface': item, 'peer': item_peer} %}

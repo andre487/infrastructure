@@ -6,6 +6,7 @@
     name:
       - iw
       - hostapd
+      - iptables-persistent
       - netfilter-persistent
       - netplan.io
   tags:
@@ -105,10 +106,19 @@
   tags:
     - access-point
 
-- name: Create DHCP server config
+- name: Add route table
+  ansible.builtin.lineinfile:
+    path: /etc/iproute2/rt_tables
+    line: '100 awg'
+    state: present
+  notify: Restart systemd-networkd
+  tags:
+    - access-point
+
+- name: Create {{ server_wifi_iface }} server config
   ansible.builtin.template:
     src: templates/01-wlan0.network.j2
-    dest: /etc/systemd/network/01-wlan0.network
+    dest: /etc/systemd/network/01-{{ server_wifi_iface }}.network
   notify:
     - Reload systemd
     - Restart systemd-networkd

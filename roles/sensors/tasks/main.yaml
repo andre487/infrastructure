@@ -1,0 +1,13 @@
+- name: Install lm-sensors
+  ansible.builtin.apt:
+    name: lm-sensors
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+  tags:
+    - sensors
+
+- name: Detect sensors
+  ansible.builtin.command: sensors-detect --auto
+  tags:
+    - sensors

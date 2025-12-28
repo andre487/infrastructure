@@ -69,13 +69,11 @@
   tags:
     - access-point
 
-- name: Install hostapd systemd override
-  become: true
-  ansible.builtin.copy:
-    src: templates/hostapd-override.conf
-    dest: /etc/systemd/system/hostapd.service.d/override.conf
+- name: Enable hostapd config
+  ansible.builtin.lineinfile:
+    path: /etc/default/hostapd
+    line: 'DAEMON_CONF="/etc/hostapd/hostapd.conf"'
   notify:
-    - Reload systemd
     - Restart hostapd
   tags:
     - access-point

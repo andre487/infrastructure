@@ -6,6 +6,7 @@
   ansible.builtin.systemd:
     name: hostapd
     state: restarted
+    force: true
 
 - name: Apply iptables rules
   ansible.builtin.shell:
@@ -23,6 +24,5 @@
     state: restarted
 
 - name: Apply netplan
-  ansible.builtin.shell:
-    cmd: netplan apply
+  ansible.builtin.command: netplan apply
   changed_when: true

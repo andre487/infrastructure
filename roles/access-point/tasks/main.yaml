@@ -136,3 +136,24 @@
   notify: Apply netplan
   tags:
     - access-point
+
+- name: Ensure ~/bin directory
+  ansible.builtin.file:
+    path: /home/{{ remote_user }}/bin
+    state: directory
+    owner: '{{ remote_user }}'
+    mode: '0755'
+  tags:
+    - access-point
+
+- name: Deploy scripts
+  ansible.builtin.template:
+    src: templates/bin/{{ item }}.j2
+    dest: /home/{{ remote_user }}/bin/{{ item }}
+    owner: '{{ remote_user }}'
+    mode: '0755'
+  with_items:
+    - ap-show-clients
+    - show-vpn-status
+  tags:
+    - access-point

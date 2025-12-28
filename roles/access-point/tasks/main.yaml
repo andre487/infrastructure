@@ -89,12 +89,14 @@
   tags:
     - access-point
 
-- name: Create IP rules.v4
+- name: Create iptables template
   ansible.builtin.template:
-    src: templates/rules.v4.j2
-    dest: /etc/iptables/rules.v4
+    src: templates/iptables.template.j2
+    dest: /etc/iptables/rules.template
     mode: 0644
-  notify: Apply iptables rules
+  notify:
+    - Apply iptables rules
+    - Save iptables rules
   tags:
     - access-point
 

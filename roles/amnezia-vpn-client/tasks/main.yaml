@@ -43,6 +43,8 @@
         {% endif %}
       {% endfor %}
       {{ ns.out | to_json }}
+  tags:
+    - amnezia-vpn-client
 
 - name: Create peer interfaces
   ansible.builtin.template:

@@ -8,7 +8,13 @@
     state: restarted
 
 - name: Apply iptables rules
-  ansible.builtin.command: iptables-restore < /etc/iptables/rules.v4
+  ansible.builtin.shell:
+    cmd: iptables-restore < /etc/iptables/rules.template
+  changed_when: true
+
+- name: Save iptables rules
+  ansible.builtin.shell:
+    cmd: sudo netfilter-persistent save
   changed_when: true
 
 - name: Restart systemd-networkd
@@ -17,5 +23,6 @@
     state: restarted
 
 - name: Apply netplan
-  ansible.builtin.command: netplan apply
+  ansible.builtin.shell:
+    cmd: netplan apply
   changed_when: true

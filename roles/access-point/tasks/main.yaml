@@ -6,7 +6,6 @@
     name:
       - iw
       - hostapd
-      - kea-dhcp4-server
       - netfilter-persistent
       - netplan.io
   tags:
@@ -108,17 +107,11 @@
 
 - name: Create DHCP server config
   ansible.builtin.template:
-    src: templates/kea-dhcp4.conf.j2
-    dest: /etc/kea/kea-dhcp4.conf
-  notify: Restart DHCP
-  tags:
-    - access-point
-
-- name: Enable DHCP
-  ansible.builtin.systemd:
-    name: kea-dhcp4-server
-    enabled: true
-    state: started
+    src: templates/01-wlan0.network.j2
+    dest: /etc/systemd/network/01-wlan0.network
+  notify:
+    - Reload systemd
+    - Restart systemd-networkd
   tags:
     - access-point
 
@@ -129,14 +122,5 @@
     dest: /etc/netplan/01-awg-ap.yaml
     mode: '600'
   notify: Apply netplan
-  tags:
-    - access-point
-
-- name: Ensure systemd-networkd is enabled and running
-  become: true
-  ansible.builtin.systemd:
-    name: systemd-networkd
-    enabled: true
-    state: started
   tags:
     - access-point

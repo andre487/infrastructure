@@ -11,8 +11,9 @@
   ansible.builtin.command: iptables-restore < /etc/iptables/rules.v4
   changed_when: true
 
-- name: Restart DHCP
+- name: Restart systemd-networkd
   ansible.builtin.systemd:
+    name: systemd-networkd
     state: restarted
 
 - name: Apply netplan

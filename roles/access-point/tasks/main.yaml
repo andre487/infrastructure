@@ -9,6 +9,7 @@
       - iptables-persistent
       - netfilter-persistent
       - netplan.io
+      - tftpd-hpa
   tags:
     - access-point
 
@@ -126,7 +127,6 @@
     - access-point
 
 - name: Deploy netplan config
-  become: true
   ansible.builtin.template:
     src: templates/01-awg-ap-netplan.yaml.j2
     dest: /etc/netplan/01-awg-ap.yaml

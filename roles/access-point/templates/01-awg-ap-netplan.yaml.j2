@@ -4,8 +4,20 @@ network:
 
   ethernets:
     {{ server_main_interface }}:
-      dhcp4: true
       optional: true
+{% if main_iface_static_ip is defined and main_iface_static_ip %}
+      addresses:
+        - {{ main_iface_static_ip }}
+      nameservers:
+        addresses:
+{% if main_iface_static_dns is defined and main_iface_static_dns %}
+          - {{ main_iface_static_dns }}
+{% endif %}
+          - 8.8.8.8
+          - 1.1.1.1
+{% else %}
+      dhcp4: true
+{% endif %}
     {{ server_wifi_iface }}:
       dhcp4: true
       dhcp6: false

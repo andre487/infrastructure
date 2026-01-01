@@ -90,6 +90,7 @@
     state: directory
   tags:
     - amnezia-vpn-server
+    - amnezia-vpn-generate-configs
 
 - name: Generate client configs
   delegate_to: localhost
@@ -100,3 +101,4 @@
   loop: "{{ awg_interfaces | subelements('peers') }}"
   tags:
     - amnezia-vpn-server
+    - amnezia-vpn-generate-configs

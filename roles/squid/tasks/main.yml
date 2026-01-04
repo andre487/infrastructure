@@ -21,7 +21,7 @@
     path: /etc/squid/users
     name: '{{ item.name }}'
     password: '{{ item.password | string }}'
-    mode: 0600
+    mode: 0644
   loop: '{{ proxy_users }}'
   register: squid_users
   tags:
@@ -49,7 +49,7 @@
 - name: Reload squid
   systemd:
     name: squid
-    state: reloaded
+    state: restarted
   when: squid_software_install.changed or squid_users.changed or squid_config.changed
   tags:
     - configuration

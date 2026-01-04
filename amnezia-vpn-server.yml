@@ -6,4 +6,3 @@
     - fail2ban
     - amnezia-vpn-server
     - logrotate
-    - reboot

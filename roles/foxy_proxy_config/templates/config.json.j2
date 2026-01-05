@@ -1,0 +1,43 @@
+{% set colors = ["#b9c6f6", "#eef209", "#3100f1", "#8b0000", "#00ced1", "#0f98cf"] %}
+{
+    "mode": "{{ hosts_data[0].http_domain }}:443",
+    "sync": false,
+    "autoBackup": false,
+    "passthrough": "",
+    "theme": "",
+    "container": {
+      "incognito": "",
+      "container-1": "",
+      "container-2": "",
+      "container-3": "",
+      "container-4": ""
+    },
+    "commands": {
+      "setProxy": "",
+      "setTabProxy": "",
+      "quickAdd": ""
+    },
+    "data": [
+        {%- for item in hosts_data %}
+
+        {
+          "active": true,
+          "title": "{{ item.country_code }}",
+          "type": "https",
+          "hostname": "{{ item.http_domain }}",
+          "port": "443",
+          "username": "{{ user_data.name }}",
+          "password": "{{ user_data.password }}",
+          "cc": "{{ item.country_code }}",
+          "city": "",
+          "color": "{{ colors[loop.index0 % colors | length] }}",
+          "pac": "",
+          "pacString": "",
+          "proxyDNS": true,
+          "include": [],
+          "exclude": []
+        }{% if loop.index < hosts_data | length %},{% endif %}
+        {% endfor %}
+
+    ]
+}

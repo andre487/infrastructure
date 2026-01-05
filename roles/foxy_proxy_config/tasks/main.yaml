@@ -1,0 +1,78 @@
+- name: Create users list
+  ansible.builtin.set_fact:
+    users_list: "{{ proxy_users | map(attribute='name') }}"
+  tags:
+    - foxy-proxy-config
+
+- name: Create users string
+  ansible.builtin.set_fact:
+    users_string: |
+      {%- for user in users_list %}
+        {{ loop.index }}. {{ user }}
+      {% endfor %}
+  tags:
+    - foxy-proxy-config
+
+- name: Choose a user
+  ansible.builtin.pause:
+    prompt: |
+      Choose a user index (1, 2, ...):
+      {{ users_string }}
+  register: user_index_data
+  tags:
+    - foxy-proxy-config
+
+- name: Validate choice
+  ansible.builtin.assert:
+    that:
+      - user_index_data.user_input | int >= 1
+      - user_index_data.user_input | int <= users_list | length
+    fail_msg: "Enter a number from 1 to {{ users_list | length }}"
+  tags:
+    - foxy-proxy-config
+
+- name: Set user login
+  ansible.builtin.set_fact:
+    user_login: "{{ users_list[(user_index_data.user_input | int) - 1] }}"
+  tags:
+    - foxy-proxy-config
+
+- name: Set user data
+  ansible.builtin.set_fact:
+    user_data: "{{ proxy_users | selectattr('name', 'equalto', user_login) | first }}"
+  tags:
+    - foxy-proxy-config
+
+- name: Create hosts data
+  ansible.builtin.set_fact:
+    hosts_data: "{{ _data | from_json }}"
+  vars:
+    _data: |
+      {% set out = [] %}
+      {% for it in proxy_hosts | dict2items %}
+        {% set cc = (it.key | regex_replace('^.*_', '') | upper) %}
+        {% set _ = out.append({'http_domain': it.value.http_domain, 'country_code': cc}) %}
+      {% endfor %}
+      {{ out | to_json }}
+  tags:
+    - foxy-proxy-config
+
+- name: Set output dir
+  ansible.builtin.set_fact:
+    out_dir: "{{ foxy_proxy_out_dir | default('{{ playbook_dir }}/generated/foxy-proxy-configs') }}"
+  tags:
+    - foxy-proxy-config
+
+- name: Ensure output dir exists
+  ansible.builtin.file:
+    path: "{{ out_dir }}"
+    state: directory
+  tags:
+    - foxy-proxy-config
+
+- name: Write config
+  ansible.builtin.template:
+    src: templates/config.json.j2
+    dest: "{{ out_dir }}/proxy_{{ user_login }}_config.json"
+  tags:
+    - foxy-proxy-config

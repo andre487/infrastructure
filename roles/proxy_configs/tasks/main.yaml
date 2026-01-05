@@ -1,0 +1,119 @@
+- name: Create users list
+  ansible.builtin.set_fact:
+    users_list: "{{ proxy_users | map(attribute='name') }}"
+  tags:
+    - proxy-configs
+
+- name: Create users string
+  ansible.builtin.set_fact:
+    users_string: |
+      {%- for user in users_list %}
+        {{ loop.index }}. {{ user }}
+      {% endfor %}
+  tags:
+    - proxy-configs
+
+- name: Choose a user
+  ansible.builtin.pause:
+    prompt: |
+      Choose a user index (1, 2, ...):
+      {{ users_string }}
+  register: user_index_data
+  tags:
+    - proxy-configs
+
+- name: Validate choice
+  ansible.builtin.assert:
+    that:
+      - user_index_data.user_input | int >= 1
+      - user_index_data.user_input | int <= users_list | length
+    fail_msg: "Enter a number from 1 to {{ users_list | length }}"
+  tags:
+    - proxy-configs
+
+- name: Set user login
+  ansible.builtin.set_fact:
+    user_login: "{{ users_list[(user_index_data.user_input | int) - 1] }}"
+  tags:
+    - proxy-configs
+
+- name: Set user data
+  ansible.builtin.set_fact:
+    user_data: "{{ proxy_users | selectattr('name', 'equalto', user_login) | first }}"
+  tags:
+    - proxy-configs
+
+- name: Create hosts data
+  ansible.builtin.set_fact:
+    hosts_data: "{{ _data | from_json }}"
+  vars:
+    _data: |
+      {% set out = [] %}
+      {% for it in proxy_hosts | dict2items %}
+        {% set cc = (it.key | regex_replace('^.*_', '') | upper) %}
+        {% set _ = out.append({'http_domain': it.value.http_domain, 'country_code': cc}) %}
+      {% endfor %}
+      {{ out | to_json }}
+  tags:
+    - proxy-configs
+
+- name: Get TLS fingerprints data
+  ansible.builtin.shell: |
+    set -euo pipefail
+    echo | openssl s_client -servername {{ item.http_domain }} -connect {{ item.http_domain }}:443 2>/dev/null \
+      | openssl x509 -outform der \
+      | openssl dgst -sha1 -hex \
+      | awk '{print"{{ item.http_domain }}"; print $2}'
+  args:
+    executable: /bin/bash
+  loop: "{{ hosts_data }}"
+  changed_when: false
+  register: tls_fingerprints_data
+  tags:
+    - proxy-configs
+
+- name: Create TLS fingerprints data
+  ansible.builtin.set_fact:
+    tls_fingerprints: "{{ dict(tls_fingerprints_data.results | map(attribute='stdout_lines')) }}"
+  tags:
+    - proxy-configs
+
+- name: Set FoxyProxy output dir
+  ansible.builtin.set_fact:
+    foxy_proxy_out_dir: "{{ foxy_proxy_out_dir | default('{{ playbook_dir }}/generated/foxy-proxy-configs') }}"
+  tags:
+    - proxy-configs
+
+- name: Set SuperProxy output dir
+  ansible.builtin.set_fact:
+    super_proxy_out_dir: "{{ super_proxy_out_dir | default('{{ playbook_dir }}/generated/super-proxy-configs') }}"
+  tags:
+    - proxy-configs
+
+- name: Ensure FoxyProxy output dir exists
+  ansible.builtin.file:
+    path: "{{ foxy_proxy_out_dir }}"
+    state: directory
+  tags:
+    - proxy-configs
+
+- name: Ensure SuperProxy output dir exists
+  ansible.builtin.file:
+    path: "{{ super_proxy_out_dir }}"
+    state: directory
+  tags:
+    - proxy-configs
+
+- name: Write FoxyProxy config
+  ansible.builtin.template:
+    src: templates/foxy-proxy-config.json.j2
+    dest: "{{ foxy_proxy_out_dir }}/foxy-proxy_{{ user_login }}_config.json"
+  tags:
+    - proxy-configs
+
+- name: Write SuperProxy config
+  ansible.builtin.template:
+    src: templates/super-proxy-config.txt.j2
+    dest: "{{ super_proxy_out_dir }}/super-proxy_{{ user_login }}_config.txt"
+  tags:
+    - proxy-configs

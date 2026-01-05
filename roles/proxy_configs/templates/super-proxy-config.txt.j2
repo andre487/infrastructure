@@ -1,0 +1,5 @@
+# superproxy:proxylist:v1
+{% for item in hosts_data %}
+https://{{ user_data.name | urlencode | replace("+", "%20") }}:{{ user_data.password | urlencode | replace("+", "%20") }}@{{ item.http_domain }}?fingerprint={{ tls_fingerprints[item.http_domain] }} "{{ item.country_code }}" {% if loop.index == 1 %}*{% endif %}
+
+{% endfor %}

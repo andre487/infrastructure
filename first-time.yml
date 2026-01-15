@@ -1,5 +1,5 @@
 - hosts: first_timers
-  become: '{{ become }}'
+  become: '{{ ft_become }}'
   environment:
     DEBIAN_FRONTEND: noninteractive
 
@@ -51,7 +51,7 @@
 
     - name: Create remote user
       user:
-        name: '{{ remote_user }}'
+        name: '{{ ft_user }}'
         password: '!'
         password_lock: true
         state: present
@@ -59,7 +59,7 @@
     - name: SSH copy ID
       authorized_key:
         key: '{{ default_public_key }}'
-        user: '{{ remote_user }}'
+        user: '{{ ft_user }}'
         state: present
         exclusive: true
 
@@ -67,7 +67,7 @@
       lineinfile:
         dest: /etc/sudoers
         state: present
-        line: '%{{ remote_user }} ALL=(ALL) NOPASSWD: ALL'
+        line: '%{{ ft_user }} ALL=(ALL) NOPASSWD: ALL'
 
     - name: Disallow login as root, step 1
       lineinfile:

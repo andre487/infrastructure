@@ -1,20 +1,21 @@
 - name: Update APT caches
-  apt:
+  ansible.builtin.apt:
     update_cache: yes
     cache_valid_time: 3600
   tags:
     - clamav-mirror
 
 - name: Install software
-  apt:
+  ansible.builtin.apt:
     name:
       - python3
+      - python3-requests
     state: present
   tags:
     - clamav-mirror
 
 - name: Create web root
-  file:
+  ansible.builtin.file:
     dest: /var/www/{{ clamav_domain }}
     state: directory
     owner: www-data
@@ -23,7 +24,7 @@
     - clamav-mirror
 
 - name: Install cvdupdate
-  apt:
+  ansible.builtin.apt:
     name: clamav-cvdupdate
     state: present
   register: clamav_cvdupdate_res
@@ -31,19 +32,43 @@
     - clamav-mirror
 
 - name: Setup cvdupdate dir
-  shell: cvdupdate config set --dbdir /var/www/{{ clamav_domain }}
+  ansible.builtin.shell:
+    cmd: cvdupdate config set --dbdir /var/www/{{ clamav_domain }}
+    executable: /bin/sh
   when: clamav_cvdupdate_res.changed
+  tags:
+    - clamav-mirror
+
+- name: Setup YC wrapper
+  ansible.builtin.template:
+    src: templates/yc-cvdupdate.py
+    dest: /bin/yc-cvdupdate.py
+    mode: 0755
+  register: clamav_yc_wrapper_result
+  tags:
+    - clamav-mirror
+
+- name: Setup proxy credentials
+  ansible.builtin.template:
+    src: templates/json-file.j2
+    dest: /etc/proxy-creds.json
+    mode: 0600
+  vars:
+    _json_data: "{{ proxy_users | selectattr('name', 'equalto', chosen_proxy_user) | first }}"
+  register: clamav_proxy_user
   tags:
     - clamav-mirror
 
 - name: First update ClamAV DB
-  shell: cvdupdate update
-  when: clamav_cvdupdate_res.changed
+  ansible.builtin.shell:
+    cmd: /bin/yc-cvdupdate.py
+    executable: /bin/sh
+  when: clamav_yc_wrapper_result.changed or clamav_cvdupdate_res.changed or clamav_proxy_user.changed
   tags:
     - clamav-mirror
 
 - name: Setup periodical update of ClamAV DB
-  template:
+  ansible.builtin.template:
     src: templates/cvdupdate.cron
     dest: /etc/cron.d/cvdupdate
   register: clamav_cron_result
@@ -51,7 +76,7 @@
     - clamav-mirror
 
 - name: Restart Cron
-  service:
+  ansible.builtin.service:
     name: cron
     state: restarted
   when: clamav_cron_result.changed
@@ -59,14 +84,14 @@
     - clamav-mirror
 
 - name: Check SSL certificates
-  stat:
+  ansible.builtin.stat:
     path: /etc/letsencrypt/live/{{ clamav_domain }}
   register: clamav_ssl_cert_result
   tags:
     - clamav-mirror
 
 - name: Setup NGINX no SSL host config
-  template:
+  ansible.builtin.template:
     src: templates/nginx-no-ssl.conf.j2
     dest: /etc/nginx/sites-available/{{ clamav_domain }}.conf
   when: clamav_ssl_cert_result.stat.exists == False
@@ -75,7 +100,7 @@
     - clamav-mirror
 
 - name: Enable NGINX clamav config
-  file:
+  ansible.builtin.file:
     state: link
     src: /etc/nginx/sites-available/{{ clamav_domain }}.conf
     dest: /etc/nginx/sites-enabled/{{ clamav_domain }}.conf
@@ -84,7 +109,7 @@
     - clamav-mirror
 
 - name: Reload NGINX
-  service:
+  ansible.builtin.service:
     name: nginx
     state: reloaded
   when: clamav_no_ssl_nginx_config_res.changed or clamav_nginx_enable_res.changed
@@ -92,19 +117,16 @@
     - clamav-mirror
 
 - name: Install certificate
-  shell: |
-    certbot --nginx \
-      -d {{ clamav_domain }} \
-      -n \
-      --agree-tos \
-      -m '{{ cert_email }}'
+  ansible.builtin.shell:
+    cmd: certbot --nginx -d '{{ clamav_domain }}' -n --agree-tos -m '{{ cert_email }}'
+    executable: /bin/sh
   when: clamav_ssl_cert_result.stat.exists == False
   register: clamav_certificate_res
   tags:
     - clamav-mirror
 
 - name: Setup NGINX clamav config
-  template:
+  ansible.builtin.template:
     src: templates/nginx.conf.j2
     dest: /etc/nginx/sites-available/{{ clamav_domain }}.conf
   register: clamav_nginx_config_res
@@ -112,7 +134,7 @@
     - clamav-mirror
 
 - name: Reload NGINX
-  service:
+  ansible.builtin.service:
     name: nginx
     state: reloaded
   when: clamav_nginx_config_res.changed

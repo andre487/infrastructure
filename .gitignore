@@ -37,3 +37,6 @@ fabric.properties
 *.retry
 .secrets
 .venv
+
+### Python
+__pycache__

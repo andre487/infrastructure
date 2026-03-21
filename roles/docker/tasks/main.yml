@@ -55,9 +55,9 @@
 
 - name: Add main user to Docker group
   user:
-    name: '{{ remote_user }}'
+    name: '{{ ansible_user }}'
     groups:
-      - '{{ remote_user }}'
+      - '{{ ansible_user }}'
       - docker
   tags:
     - configuration

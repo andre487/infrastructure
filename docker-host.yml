@@ -1,0 +1,11 @@
+- hosts: docker_hosts
+  become: true
+  become_method: sudo
+  environment:
+    DEBIAN_FRONTEND: noninteractive
+
+  roles:
+    - system
+    - fail2ban
+    - docker
+    - logrotate

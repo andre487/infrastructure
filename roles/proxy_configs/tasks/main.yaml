@@ -80,13 +80,13 @@
 
 - name: Set FoxyProxy output dir
   ansible.builtin.set_fact:
-    foxy_proxy_out_dir: "{{ foxy_proxy_out_dir | default('{{ playbook_dir }}/generated/foxy-proxy-configs') }}"
+    foxy_proxy_out_dir: "{{ foxy_proxy_out_dir | default('generated/foxy-proxy-configs') }}"
   tags:
     - proxy-configs
 
 - name: Set SuperProxy output dir
   ansible.builtin.set_fact:
-    super_proxy_out_dir: "{{ super_proxy_out_dir | default('{{ playbook_dir }}/generated/super-proxy-configs') }}"
+    super_proxy_out_dir: "{{ super_proxy_out_dir | default('generated/super-proxy-configs') }}"
   tags:
     - proxy-configs
 

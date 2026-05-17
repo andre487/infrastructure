@@ -1,0 +1,8 @@
+mtg_net_name: mtg_net
+mtg_bridge_name: br-mtg
+mtg_subnet: 172.30.44.0/24
+mtg_gateway: 172.30.44.1
+awg_iface: awg0
+route_table_id: 200
+route_table_name: awg
+fwmark: "0x44"

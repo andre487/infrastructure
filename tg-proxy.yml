@@ -1,0 +1,9 @@
+- hosts: tg_proxies
+  become: true
+
+  roles:
+    - system
+    - amnezia-vpn-client
+    - docker
+    - mtg
+    - logrotate

@@ -1,0 +1,9 @@
+- name: Reload nftables
+  command: nft -f /etc/nftables.conf
+
+- name: Restart Docker
+  ansible.builtin.systemd:
+    name: docker
+    daemon_reload: true
+    enabled: true
+    state: restarted

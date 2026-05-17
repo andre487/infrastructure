@@ -1,0 +1,12 @@
+- hosts: chain_proxies
+  become: true
+  become_method: sudo
+  environment:
+    DEBIAN_FRONTEND: noninteractive
+
+  roles:
+    - system
+    - firewall
+    - logrotate
+    - chain-proxy
+    - fail2ban

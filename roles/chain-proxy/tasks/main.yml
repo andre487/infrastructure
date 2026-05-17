@@ -1,0 +1,50 @@
+- name: Add routing table name
+  lineinfile:
+    path: /etc/iproute2/rt_tables
+    line: "100 awg"
+    regexp: '^\s*100\s+awg\s*$'
+    create: false
+  tags:
+    - chain-proxy
+
+- name: Install awg policy routing unit
+  copy:
+    dest: /etc/systemd/system/awg-policy-routing.service
+    mode: "0644"
+    content: |
+      [Unit]
+      Description=Policy routing for Squid via awg0
+      After=network-online.target awg-quick@awg0.service
+      Wants=network-online.target awg-quick@awg0.service
+
+      [Service]
+      Type=oneshot
+      RemainAfterExit=yes
+      ExecStart=/bin/sh -c '/usr/sbin/ip route replace default dev awg0 table awg'
+      ExecStart=/bin/sh -c '/usr/sbin/ip rule show | grep -Eq "fwmark 0x64 lookup (awg|100)" || /usr/sbin/ip rule add fwmark 100 table awg priority 1000'
+      ExecStop=/bin/sh -c '/usr/sbin/ip rule del fwmark 100 table awg priority 1000 || true'
+      ExecStop=/bin/sh -c '/usr/sbin/ip route flush table awg || true'
+
+      [Install]
+      WantedBy=multi-user.target
+  register: awg_policy_unit
+  tags:
+    - chain-proxy
+
+- name: Enable and start policy routing unit
+  systemd:
+    name: awg-policy-routing.service
+    enabled: true
+    state: started
+    daemon_reload: "{{ awg_policy_unit.changed }}"
+  tags:
+    - chain-proxy
+
+- name: Restart policy routing unit if changed
+  systemd:
+    name: awg-policy-routing.service
+    state: restarted
+    daemon_reload: true
+  when: awg_policy_unit.changed
+  tags:
+    - chain-proxy

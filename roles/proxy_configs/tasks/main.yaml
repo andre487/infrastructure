@@ -50,8 +50,9 @@
     _data: |
       {% set out = [] %}
       {% for it in proxy_hosts | dict2items %}
-        {% set cc = (it.key | regex_replace('^.*_', '') | upper) %}
-        {% set _ = out.append({'http_domain': it.value.http_domain, 'country_code': cc}) %}
+        {% set cc = (it.key | regex_replace('^([^_]+)_.+$', '\\1') | upper) %}
+        {% set name = (it.key | replace('_', ' ') | title) %}
+        {% set _ = out.append({'name': name, 'http_domain': it.value.http_domain, 'country_code': cc}) %}
       {% endfor %}
       {{ out | to_json }}
   tags:

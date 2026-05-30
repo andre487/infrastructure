@@ -1,3 +1,6 @@
+cache_effective_user proxy
+cache_effective_group proxy
+
 http_port [::1]:3128
 shutdown_lifetime 10 seconds
 visible_hostname {{ http_domain }}
@@ -11,9 +14,9 @@ http_access allow users
 http_access deny all
 
 forwarded_for delete
-via off
 follow_x_forwarded_for deny all
 request_header_access X-Forwarded-For deny all
 
 cache deny all
-cache_dir null /tmp
+cache_mem 0 MB
+maximum_object_size 0 KB

@@ -52,8 +52,8 @@
     mode: "0644"
     content: |
       [Service]
-      AmbientCapabilities=CAP_NET_ADMIN
-      CapabilityBoundingSet=CAP_NET_ADMIN
+      AmbientCapabilities=CAP_NET_ADMIN CAP_SETGID CAP_SETUID
+      CapabilityBoundingSet=CAP_NET_ADMIN CAP_SETGID CAP_SETUID
   register: squid_systemd_override
   tags:
     - configuration

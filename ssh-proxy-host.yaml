@@ -1,0 +1,12 @@
+- hosts: ssh_proxy_hosts
+  become: true
+  become_method: sudo
+  environment:
+    DEBIAN_FRONTEND: noninteractive
+
+  roles:
+    - system
+    - firewall
+    - logrotate
+    - ssh-proxy-host
+    - fail2ban

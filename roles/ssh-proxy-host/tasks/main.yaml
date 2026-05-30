@@ -1,0 +1,26 @@
+- name: Check vars
+  ansible.builtin.assert:
+    that:
+      - ssh_users is defined
+
+- name: Create group
+  ansible.builtin.group:
+    name: ssh_tunnels
+    state: present
+  notify: Reload SSH
+
+- name: Create users
+  ansible.builtin.user:
+    name: "tun-{{ item.name }}"
+    groups: ssh_tunnels
+    password: "{{ item.password }}"
+    create_home: false
+    shell: /usr/sbin/nologin
+  loop: "{{ ssh_users }}"
+  notify: Reload SSH
+
+- name: Create ssh tunnels conf
+  ansible.builtin.template:
+    src: ssh_tunnels_conf.j2
+    dest: /etc/ssh/sshd_config.d/ssh_tunnels.conf
+  notify: Reload SSH

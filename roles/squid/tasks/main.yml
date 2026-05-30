@@ -46,27 +46,6 @@
     - configuration
     - squid
 
-- name: Allow Squid to use SO_MARK
-  copy:
-    dest: /etc/systemd/system/squid.service.d/netadmin.conf
-    mode: "0644"
-    content: |
-      [Service]
-      AmbientCapabilities=CAP_NET_ADMIN CAP_SETGID CAP_SETUID
-      CapabilityBoundingSet=CAP_NET_ADMIN CAP_SETGID CAP_SETUID
-  register: squid_systemd_override
-  tags:
-    - configuration
-    - squid
-
-- name: Reload systemd
-  systemd:
-    daemon_reload: true
-  when: squid_systemd_override.changed
-  tags:
-    - configuration
-    - squid
-
 - name: Start squid
   systemd:
     name: squid
@@ -80,7 +59,7 @@
   systemd:
     name: squid
     state: restarted
-  when: squid_software_install.changed or squid_users.changed or squid_config.changed or squid_systemd_override.changed
+  when: squid_software_install.changed or squid_users.changed or squid_config.changed
   tags:
     - configuration
     - squid

@@ -63,3 +63,57 @@
   when: awg_policy_unit.changed
   tags:
     - chain-proxy
+
+- name: Install awg policy routing restart unit
+  copy:
+    dest: /etc/systemd/system/awg-policy-routing-restart.service
+    mode: "0644"
+    content: |
+      [Unit]
+      Description=Restart awg policy routing
+      After=awg-policy-routing.service
+      Requires=awg-policy-routing.service
+
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/bin/systemctl restart awg-policy-routing.service
+  register: awg_policy_restart_unit
+  tags:
+    - chain-proxy
+
+- name: Install awg policy routing restart timer
+  copy:
+    dest: /etc/systemd/system/awg-policy-routing-restart.timer
+    mode: "0644"
+    content: |
+      [Unit]
+      Description=Restart awg policy routing every hour
+
+      [Timer]
+      OnBootSec=1h
+      OnUnitActiveSec=1h
+      Persistent=true
+
+      [Install]
+      WantedBy=timers.target
+  register: awg_policy_restart_timer
+  tags:
+    - chain-proxy
+
+- name: Enable and start policy routing restart timer
+  systemd:
+    name: awg-policy-routing-restart.timer
+    enabled: true
+    state: started
+    daemon_reload: "{{ awg_policy_restart_unit.changed or awg_policy_restart_timer.changed }}"
+  tags:
+    - chain-proxy
+
+- name: Restart policy routing restart timer if changed
+  systemd:
+    name: awg-policy-routing-restart.timer
+    state: restarted
+    daemon_reload: true
+  when: awg_policy_restart_unit.changed or awg_policy_restart_timer.changed
+  tags:
+    - chain-proxy

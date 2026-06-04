@@ -25,6 +25,38 @@
   tags:
     - ssh-proxy-host
 
+- name: Create SSH authorized keys directory
+  ansible.builtin.file:
+    path: /etc/ssh/authorized_keys
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  when: ssh_users | selectattr('public_key', 'defined') | list | length > 0
+  tags:
+    - ssh-proxy-host
+
+- name: Add public keys
+  ansible.builtin.copy:
+    dest: "/etc/ssh/authorized_keys/tun-{{ item.name }}"
+    content: "{{ item.public_key | trim }}\n"
+    owner: root
+    group: root
+    mode: "0644"
+  loop: "{{ ssh_users }}"
+  when: item.public_key is defined
+  tags:
+    - ssh-proxy-host
+
+- name: Remove public keys for users without public_key
+  ansible.builtin.file:
+    path: "/etc/ssh/authorized_keys/tun-{{ item.name }}"
+    state: absent
+  loop: "{{ ssh_users }}"
+  when: item.public_key is not defined
+  tags:
+    - ssh-proxy-host
+
 - name: Create ssh tunnels conf
   ansible.builtin.template:
     src: ssh_tunnels_conf.j2

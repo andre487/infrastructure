@@ -9,4 +9,5 @@
     - firewall
     - logrotate
     - squid
+    - ssh-proxy-host
     - fail2ban

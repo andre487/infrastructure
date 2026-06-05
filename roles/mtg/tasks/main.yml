@@ -72,8 +72,10 @@
     content: |
       [Unit]
       Description=Policy routing for MTG Docker network via AWG
-      After=network-online.target docker.service
+      After=network-online.target docker.service awg-quick@awg0.service
       Wants=network-online.target
+      Requires=awg-quick@awg0.service
+      PartOf=awg-quick@awg0.service
 
       [Service]
       Type=oneshot
@@ -84,7 +86,7 @@
       ExecStop=/bin/sh -c 'ip route flush table {{ route_table_id }} || true'
 
       [Install]
-      WantedBy=multi-user.target
+      WantedBy=multi-user.target awg-quick@awg0.service
   register: policy_routing_unit
   tags:
     - tg-proxy

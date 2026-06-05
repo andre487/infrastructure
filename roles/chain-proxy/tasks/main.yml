@@ -54,21 +54,3 @@
     daemon_reload: "{{ awg_policy_unit.changed }}"
   tags:
     - chain-proxy
-
-# `enabled: true` is idempotent and won't recreate symlinks for newly added
-# WantedBy= targets on an already-enabled unit, so reenable on change to make
-# sure awg-quick@awg0.service.wants/ gets the link (auto-start with awg0).
-- name: Reenable policy routing unit to refresh WantedBy links
-  command: systemctl reenable awg-policy-routing.service
-  when: awg_policy_unit.changed
-  tags:
-    - chain-proxy
-
-- name: Restart policy routing unit if changed
-  systemd:
-    name: awg-policy-routing.service
-    state: restarted
-    daemon_reload: true
-  when: awg_policy_unit.changed
-  tags:
-    - chain-proxy

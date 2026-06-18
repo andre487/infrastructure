@@ -24,6 +24,7 @@
     mode: 0644
   loop: '{{ proxy_users }}'
   register: squid_users
+  no_log: true
   tags:
     - configuration
     - squid
@@ -132,6 +133,8 @@
       --email '{{ cert_email }}'
   when: squid_ssl_result.stat.exists == False
   register: squid_ssl_new_cert
+  retries: 10
+  delay: 300
   tags:
     - configuration
     - squid

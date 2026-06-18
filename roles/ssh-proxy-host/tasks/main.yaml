@@ -21,6 +21,7 @@
     create_home: false
     shell: /usr/sbin/nologin
   loop: "{{ ssh_users }}"
+  no_log: true
   notify: Reload SSH
   tags:
     - ssh-proxy-host
@@ -45,6 +46,7 @@
     mode: "0644"
   loop: "{{ ssh_users }}"
   when: item.public_key is defined
+  no_log: true
   tags:
     - ssh-proxy-host
 

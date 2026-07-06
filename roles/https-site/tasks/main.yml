@@ -1,3 +1,18 @@
+- name: Create optional NGINX include directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop:
+    - /etc/nginx/server.d/{{ http_domain }}
+    - /etc/nginx/location.d/{{ http_domain }}/static
+    - /etc/nginx/location.d/{{ http_domain }}/root
+  tags:
+    - deploy
+    - https-site
+
 - name: Check SSL certificates
   stat:
     path: /etc/letsencrypt/live/{{ http_domain }}

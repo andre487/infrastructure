@@ -5,7 +5,11 @@ server {
 
     server_name {{ http_domain }};
 
+    include /etc/nginx/server.d/{{ http_domain }}/*.conf;
+
     location / {
+        include /etc/nginx/location.d/{{ http_domain }}/root/*.conf;
+
         root /var/www/{{ http_domain }};
     }
 }

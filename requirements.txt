@@ -1,4 +1,4 @@
 ansible==13.2.0
-ansible-core==2.20.1
+ansible-core==2.20.7rc1
 bcrypt==5.0.0
 passlib==1.7.4

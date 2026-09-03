@@ -49,12 +49,11 @@
     - clamav-mirror
 
 - name: Setup proxy credentials
-  ansible.builtin.template:
-    src: templates/json-file.j2
+  ansible.builtin.copy:
+    content: "{{ {'name': clamav_proxy.login, 'password': clamav_proxy.password} | to_nice_json }}\n"
     dest: /etc/proxy-creds.json
     mode: 0600
-  vars:
-    _json_data: "{{ proxy_users | selectattr('name', 'equalto', chosen_proxy_user) | first }}"
+  no_log: true
   register: clamav_proxy_user
   tags:
     - clamav-mirror

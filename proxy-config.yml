@@ -1,4 +1,0 @@
-- name: Generate proxy configs
-  hosts: foxy_proxy_local
-  roles:
-    - proxy_configs

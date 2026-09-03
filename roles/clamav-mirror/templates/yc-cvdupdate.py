@@ -21,7 +21,7 @@ def main():
 
     proxy_url = (
         f'https://{urllib.parse.quote(proxy_creds["name"])}:{urllib.parse.quote(proxy_creds["password"])}@'
-        '{{ proxy_host }}'
+        '{{ clamav_proxy.host }}'
     )
     env = os.environ.copy()
     env['http_proxy'] = env['https_proxy'] = proxy_url

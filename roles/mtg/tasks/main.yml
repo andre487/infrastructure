@@ -1,12 +1,3 @@
-- name: Add routing table name
-  lineinfile:
-    path: /etc/iproute2/rt_tables
-    line: "{{ route_table_id }} {{ route_table_name }}"
-    regexp: "^{{ route_table_id }}\\s+{{ route_table_name }}$"
-    state: present
-  tags:
-    - tg-proxy
-
 - name: Create dedicated Docker network for MTG
   community.docker.docker_network:
     name: "{{ mtg_net_name }}"
@@ -19,167 +10,8 @@
   tags:
     - tg-proxy
 
-# The apply/teardown logic lives in an idempotent script so it can be invoked
-# both by the main oneshot unit (on boot / awg restart / docker restart) and by
-# a periodic heal timer that re-applies the rules if anything wipes them.
-- name: Install MTG policy routing script
-  copy:
-    dest: /usr/local/sbin/mtg-awg-routing.sh
-    mode: "0755"
-    content: |
-      #!/bin/sh
-      # Managed by Ansible (roles/mtg). Policy routing for the MTG Docker
-      # network via {{ awg_iface }}. Idempotent: re-running "up" never leaves a
-      # gap and never accumulates duplicate rules.
-      set -eu
-
-      AWG_IFACE="{{ awg_iface }}"
-      ROUTE_TABLE_ID="{{ route_table_id }}"
-      FWMARK="{{ fwmark }}"
-      MTG_BRIDGE="{{ mtg_bridge_name }}"
-      MTG_SUBNET="{{ mtg_subnet }}"
-      RULE_PRIO=10044
-
-      up() {
-          # Recreate both tables in a single atomic transaction. The
-          # "add table; delete table; table {...}" idiom guarantees the table
-          # exists (add is a no-op if present), wipes it, then refills it -
-          # all without a window where rules are missing and without dupes.
-          #
-          # Proxy/prometheus replies (sport 3128/3129) are left unmarked so they
-          # return via the main interface; only outbound container traffic is
-          # marked to use the awg0 routing table.
-          /usr/sbin/nft -f - <<NFT
-      add table inet mtg_awg
-      delete table inet mtg_awg
-      table inet mtg_awg {
-          chain prerouting {
-              type filter hook prerouting priority mangle; policy accept;
-              iifname "${MTG_BRIDGE}" ip saddr ${MTG_SUBNET} tcp sport 3128 return
-              iifname "${MTG_BRIDGE}" ip saddr ${MTG_SUBNET} tcp sport 3129 return
-              iifname "${MTG_BRIDGE}" ip saddr ${MTG_SUBNET} meta mark set ${FWMARK}
-          }
-      }
-
-      add table ip mtg_awgnat
-      delete table ip mtg_awgnat
-      table ip mtg_awgnat {
-          chain postrouting {
-              type nat hook postrouting priority srcnat; policy accept;
-              oifname "${AWG_IFACE}" ip saddr ${MTG_SUBNET} masquerade
-          }
-      }
-      NFT
-
-          # Default route + fwmark rule only make sense while awg0 is up.
-          # Skip silently when it is down so the heal timer does not error out.
-          if [ -d "/sys/class/net/${AWG_IFACE}" ]; then
-              /usr/sbin/ip route replace default dev "${AWG_IFACE}" table "${ROUTE_TABLE_ID}"
-              while /usr/sbin/ip rule del fwmark "${FWMARK}" table "${ROUTE_TABLE_ID}" priority "${RULE_PRIO}" 2>/dev/null; do :; done
-              /usr/sbin/ip rule add fwmark "${FWMARK}" table "${ROUTE_TABLE_ID}" priority "${RULE_PRIO}"
-          fi
-      }
-
-      down() {
-          while /usr/sbin/ip rule del fwmark "${FWMARK}" table "${ROUTE_TABLE_ID}" priority "${RULE_PRIO}" 2>/dev/null; do :; done
-          /usr/sbin/ip route flush table "${ROUTE_TABLE_ID}" 2>/dev/null || true
-          /usr/sbin/nft delete table inet mtg_awg 2>/dev/null || true
-          /usr/sbin/nft delete table ip mtg_awgnat 2>/dev/null || true
-      }
-
-      case "${1:-up}" in
-          up) up ;;
-          down) down ;;
-          *) echo "usage: $0 {up|down}" >&2; exit 2 ;;
-      esac
-  register: policy_routing_script
-  tags:
-    - tg-proxy
-
-- name: Install policy routing systemd unit
-  copy:
-    dest: /etc/systemd/system/mtg-awg-routing.service
-    mode: "0644"
-    content: |
-      [Unit]
-      Description=Policy routing for MTG Docker network via AWG
-      After=network-online.target docker.service awg-quick@{{ awg_iface }}.service
-      Wants=network-online.target
-      Requires=awg-quick@{{ awg_iface }}.service
-      PartOf=awg-quick@{{ awg_iface }}.service docker.service
-
-      [Service]
-      Type=oneshot
-      RemainAfterExit=yes
-      ExecStart=/usr/local/sbin/mtg-awg-routing.sh up
-      ExecStop=/usr/local/sbin/mtg-awg-routing.sh down
-
-      [Install]
-      WantedBy=multi-user.target awg-quick@{{ awg_iface }}.service
-  register: policy_routing_unit
-  tags:
-    - tg-proxy
-
-# Self-healing: re-apply the rules periodically in case Docker, awg or anything
-# else flushes them. "up" is idempotent so this is safe to run repeatedly.
-- name: Install policy routing heal unit
-  copy:
-    dest: /etc/systemd/system/mtg-awg-routing-heal.service
-    mode: "0644"
-    content: |
-      [Unit]
-      Description=Re-apply MTG policy routing rules if they were dropped
-      After=mtg-awg-routing.service
-
-      [Service]
-      Type=oneshot
-      ExecStart=/usr/local/sbin/mtg-awg-routing.sh up
-  register: policy_routing_heal_unit
-  tags:
-    - tg-proxy
-
-- name: Install policy routing heal timer
-  copy:
-    dest: /etc/systemd/system/mtg-awg-routing-heal.timer
-    mode: "0644"
-    content: |
-      [Unit]
-      Description=Periodically re-apply MTG policy routing rules
-
-      [Timer]
-      OnBootSec=2min
-      OnUnitActiveSec=1min
-      AccuracySec=10s
-      Unit=mtg-awg-routing-heal.service
-
-      [Install]
-      WantedBy=timers.target
-  register: policy_routing_timer
-  tags:
-    - tg-proxy
-
-- name: Reload systemd for policy routing units
-  systemd:
-    daemon_reload: true
-  when: >-
-    policy_routing_script.changed or policy_routing_unit.changed
-    or policy_routing_heal_unit.changed or policy_routing_timer.changed
-  tags:
-    - tg-proxy
-
-- name: Enable policy routing
-  systemd:
-    name: mtg-awg-routing.service
-    enabled: true
-    state: restarted
-  tags:
-    - tg-proxy
-
-- name: Enable policy routing heal timer
-  systemd:
-    name: mtg-awg-routing-heal.timer
-    enabled: true
-    state: started
+- name: Configure SSH egress
+  ansible.builtin.include_tasks: ssh.yml
   tags:
     - tg-proxy
 
@@ -201,6 +33,7 @@
     - tg-proxy
 
 - name: Generate MTG secret
+  no_log: true
   ansible.builtin.command:
     cmd: docker run --rm nineseconds/mtg:2 generate-secret --hex "{{ fake_tls_domain }}"
   register: mtg_generated_secret
@@ -210,6 +43,7 @@
     - tg-proxy
 
 - name: Save MTG secret
+  no_log: true
   ansible.builtin.copy:
     dest: /etc/mtg/secret.txt
     content: "{{ mtg_generated_secret.stdout | trim }}\n"
@@ -221,6 +55,7 @@
     - tg-proxy
 
 - name: Read MTG secret
+  no_log: true
   ansible.builtin.slurp:
     src: /etc/mtg/secret.txt
   register: mtg_secret_slurp
@@ -228,12 +63,14 @@
     - tg-proxy
 
 - name: Set MTG secret fact
+  no_log: true
   ansible.builtin.set_fact:
     mtg_secret: "{{ mtg_secret_slurp.content | b64decode | trim }}"
   tags:
     - tg-proxy
 
 - name: Create MTG link file
+  no_log: true
   ansible.builtin.template:
     src: templates/link.txt.j2
     dest: /etc/mtg/link.txt
@@ -244,6 +81,8 @@
     - tg-proxy
 
 - name: Configure MTG
+  no_log: true
+  register: mtg_config
   ansible.builtin.template:
     src: templates/mtg.config.toml.j2
     dest: /etc/mtg/config.toml
@@ -259,8 +98,8 @@
     image: nineseconds/mtg:2
     state: started
     restart_policy: unless-stopped
-    pull: true
-    recreate: true
+    pull: false
+    recreate: "{{ mtg_config.changed }}"
     networks:
       - name: "{{ mtg_net_name }}"
     published_ports:
@@ -273,6 +112,7 @@
     - tg-proxy
 
 - name: Read MTG link
+  no_log: true
   ansible.builtin.slurp:
     src: /etc/mtg/link.txt
   register: mtg_link_file
@@ -280,6 +120,7 @@
     - tg-proxy
 
 - name: Print MTG link
+  no_log: true
   ansible.builtin.debug:
     msg: "{{ mtg_link_file.content | b64decode | trim }}"
   tags:

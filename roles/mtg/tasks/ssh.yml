@@ -1,0 +1,78 @@
+- name: Validate SSH egress settings
+  ansible.builtin.assert:
+    that:
+      - mtg_ssh_host | length > 0
+      - mtg_ssh_user | length > 0
+  tags: [tg-proxy]
+
+- name: Install SSH client
+  ansible.builtin.apt:
+    name: openssh-client
+    state: present
+  tags: [tg-proxy]
+
+- name: Create SSH egress directory
+  ansible.builtin.file:
+    path: /etc/mtg/ssh
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
+  tags: [tg-proxy]
+
+- name: Install SSH egress private key
+  ansible.builtin.copy:
+    dest: /etc/mtg/ssh/id_ed25519
+    content: "{{ mtg_ssh_private_key }}"
+    owner: root
+    group: root
+    mode: '0600'
+    validate: /usr/bin/ssh-keygen -y -f %s
+  no_log: true
+  diff: false
+  register: mtg_ssh_key
+  tags: [tg-proxy]
+
+- name: Remove obsolete SSH proxy host keys
+  ansible.builtin.file:
+    path: /etc/mtg/ssh/known_hosts
+    state: absent
+  tags: [tg-proxy]
+
+- name: Install SSH egress service
+  ansible.builtin.template:
+    src: mtg-ssh-egress.service.j2
+    dest: /etc/systemd/system/mtg-ssh-egress.service
+    mode: '0644'
+  register: mtg_ssh_unit
+  tags: [tg-proxy]
+
+- name: Start SSH egress
+  ansible.builtin.systemd:
+    name: mtg-ssh-egress.service
+    daemon_reload: true
+    enabled: true
+    state: "{{ 'restarted' if mtg_ssh_unit.changed or mtg_ssh_key.changed else 'started' }}"
+  tags: [tg-proxy]
+
+- name: Verify SSH egress
+  ansible.builtin.command:
+    argv:
+      - curl
+      - --fail
+      - --silent
+      - --show-error
+      - --connect-timeout
+      - '5'
+      - --max-time
+      - '15'
+      - --proxy
+      - "socks5h://{{ mtg_gateway }}:{{ mtg_ssh_socks_port }}"
+      - https://api.ipify.org
+  register: mtg_ssh_probe
+  changed_when: false
+  retries: 3
+  delay: 3
+  until: mtg_ssh_probe.rc == 0
+  when: not ansible_check_mode
+  tags: [tg-proxy]

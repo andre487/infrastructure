@@ -3,7 +3,6 @@
 
   roles:
     - system
-    - amnezia-vpn-client
     - docker
     - mtg
     - logrotate

@@ -5,7 +5,6 @@
 
   roles:
     - postfix
-    - login-notify
 
   tasks:
     - name: Set hostname

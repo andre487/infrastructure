@@ -2,8 +2,9 @@
 
 Роль использует SSH SOCKS для выхода в интернет. Все параметры развёртывания,
 включая настройки Docker-сети, адрес и порты SSH-прокси и пользователя,
-задаются в `host_vars` или `group_vars` внешнего inventory. В infrastructure
-хранятся только задачи и шаблоны.
+задаются внутри `ansible-inventory.yml` внешнего inventory: общие — в
+`tg_proxies.vars`, индивидуальные — в `tg_proxies.hosts` под нужным хостом.
+В infrastructure хранятся только задачи и шаблоны.
 
 Учётные записи выходных SSH-прокси управляются через MegaProxyServer и его
 inventory; путь к inventory записан в `inventory-path` того проекта.

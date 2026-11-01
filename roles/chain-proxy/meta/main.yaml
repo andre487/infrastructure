@@ -1,3 +1,0 @@
-dependencies:
-  - role: amnezia-vpn-client
-  - role: squid

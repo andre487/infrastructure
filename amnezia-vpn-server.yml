@@ -1,8 +1,0 @@
-- hosts: amnezia_vpn
-  become: true
-
-  roles:
-    - system
-    - fail2ban
-    - amnezia-vpn-server
-    - logrotate

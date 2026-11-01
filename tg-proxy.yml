@@ -1,8 +1,0 @@
-- hosts: tg_proxies
-  become: true
-
-  roles:
-    - system
-    - docker
-    - mtg
-    - logrotate

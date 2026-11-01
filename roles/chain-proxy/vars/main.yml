@@ -1,3 +1,0 @@
-route_table_id: 200
-route_table_name: awg
-fwmark: "0x64"

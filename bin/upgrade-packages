@@ -2,9 +2,9 @@
 """Prompt for hosts and run package upgrades through the project's uv wrapper."""
 import argparse
 import os
-from pathlib import Path
 import re
 import sys
+from pathlib import Path
 
 
 HELP = """Usage: bin/upgrade-packages [ansible-playbook options]

@@ -31,6 +31,22 @@ bin/upgrade-packages -u deploy --ask-become-pass           # Set SSH user and pr
 Hosts accept spaces or commas. With an inventory, all hosts are selected unless limited.
 Use `--check --diff` to preview; no automatic reboot.
 
+## Docker cleanup
+
+```sh
+bin/docker-clean
+bin/docker-clean -i inventory.yml --limit docker
+bin/docker-clean -e docker_clean_until=720h
+bin/docker-clean --volumes
+```
+
+Uses Docker's built-in `system prune`, defaulting to objects created over 7 days ago.
+Deletes stopped containers (including their writable layers), unused networks,
+dangling images and build cache. Volumes and tagged images are retained by default.
+`--volumes` also deletes unused anonymous volumes of any age (requires Docker 23+).
+Named volumes remain; Docker does not support the age filter for volume pruning.
+`--check` reports disk usage without deleting anything; it does not predict removals.
+
 ## Checks
 
 ```sh

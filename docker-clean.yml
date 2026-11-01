@@ -1,0 +1,68 @@
+---
+- name: Clean unused Docker resources
+  hosts: '{{ arg_hosts }}'
+  become: true
+  gather_facts: false
+  vars:
+    docker_clean_until: 168h
+    docker_clean_volumes: false
+  tasks:
+    - name: Show Docker disk usage before cleanup
+      ansible.builtin.command:
+        argv: [docker, system, df]
+      check_mode: false
+      changed_when: false
+      register: docker_clean_before
+
+    - name: Report Docker disk usage
+      ansible.builtin.debug:
+        var: docker_clean_before.stdout_lines
+
+    - name: Explain check mode
+      ansible.builtin.debug:
+        msg: 'Docker prune has no dry-run; check mode reports disk usage without deleting anything.'
+      when: ansible_check_mode
+
+    - name: Read Docker API version before optional volume cleanup
+      ansible.builtin.command:
+        argv: [docker, version, --format, '{{ "{{.Client.APIVersion}} {{.Server.APIVersion}}" }}']
+      check_mode: false
+      changed_when: false
+      register: docker_clean_api
+      when: docker_clean_volumes | bool
+
+    - name: Require support for anonymous-only volume pruning
+      ansible.builtin.assert:
+        that:
+          - docker_clean_api.stdout.split()[0] is version('1.42', '>=')
+          - docker_clean_api.stdout.split()[1] is version('1.42', '>=')
+        fail_msg: 'Volume cleanup requires Docker CLI and Engine 23+ to preserve unused named volumes.'
+      when: docker_clean_volumes | bool
+
+    - name: Remove old unused Docker objects without pruning volumes
+      ansible.builtin.command:
+        argv: [docker, system, prune, --force, --filter, 'until={{ docker_clean_until }}']
+      register: docker_clean_result
+      changed_when: "docker_clean_result.stdout | trim != 'Total reclaimed space: 0B'"
+      when: not ansible_check_mode
+
+    - name: Report cleanup result
+      ansible.builtin.debug:
+        var: docker_clean_result.stdout_lines
+      when: not ansible_check_mode
+
+    - name: Remove unused anonymous volumes when explicitly requested
+      ansible.builtin.command:
+        argv: [docker, volume, prune, --force]
+      register: docker_clean_volume_result
+      changed_when: "docker_clean_volume_result.stdout | trim != 'Total reclaimed space: 0B'"
+      when:
+        - docker_clean_volumes | bool
+        - not ansible_check_mode
+
+    - name: Report volume cleanup result
+      ansible.builtin.debug:
+        var: docker_clean_volume_result.stdout_lines
+      when:
+        - docker_clean_volumes | bool
+        - not ansible_check_mode

@@ -3,6 +3,7 @@ import re
 import subprocess as sp
 import sys
 import tempfile
+from pathlib import Path
 
 
 def main():
@@ -15,7 +16,7 @@ def main():
     with tempfile.NamedTemporaryFile() as f:
         f.write(content.encode("utf8"))
         f.seek(0)
-        sp.check_call(["ansible-vault", "decrypt", "--output", "-", "-"], stdin=f)
+        sp.check_call([str(Path(__file__).resolve().with_name("ansible-vault")), "decrypt", "--output", "-", "-"], stdin=f)
 
 
 if __name__ == "__main__":

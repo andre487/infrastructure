@@ -2,4 +2,4 @@
 set -e -o pipefail
 
 dir="$(cd "$(dirname "$0")" && pwd)/.."
-"$dir/.venv/bin/ansible-vault" "$@"
+exec uv run --locked --project "$dir" -- ansible-vault "$@"

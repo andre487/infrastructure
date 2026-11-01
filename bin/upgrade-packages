@@ -1,0 +1,56 @@
+#!/usr/bin/env python3
+"""Prompt for hosts and run package upgrades through the project's uv wrapper."""
+import argparse
+import os
+from pathlib import Path
+import re
+import sys
+
+
+HELP = """Usage: bin/upgrade-packages [ansible-playbook options]
+Prompts for SSH hostnames, aliases or IP addresses, separated by spaces or commas.
+With -i/--inventory, uses that inventory without prompting (all hosts unless limited).
+Examples:
+  bin/upgrade-packages
+  bin/upgrade-packages -u deploy --private-key ~/.ssh/id_ed25519
+  bin/upgrade-packages --ask-pass --ask-become-pass
+  bin/upgrade-packages --check --diff
+  bin/upgrade-packages -i inventory.yml --limit servers
+"""
+
+
+def main() -> int:
+    args = sys.argv[1:]
+    if args and args[0] in ("--help", "-h"):
+        print(HELP, end="")
+        return 0
+    parser = argparse.ArgumentParser(add_help=False, allow_abbrev=False)
+    parser.add_argument("-i", "--inventory", "--inventory-file", action="append")
+    options, _ = parser.parse_known_args(args)
+    inventory_args = []
+    if options.inventory is None:
+        try:
+            hosts = input("Hosts to upgrade (spaces or commas): ").replace(",", " ").split()
+        except EOFError:
+            hosts = []
+        except KeyboardInterrupt:
+            print(file=sys.stderr)
+            return 130
+        if not hosts:
+            print("No hosts entered; nothing to upgrade.", file=sys.stderr)
+            return 2
+        for host in hosts:
+            if not re.fullmatch(r"[a-zA-Z0-9_:][a-zA-Z0-9_.:%-]*", host):
+                print(f"Invalid host: {host}", file=sys.stderr)
+                return 2
+        inventory_args = ["-i", ",".join(hosts) + ","]
+        print(f"Upgrade targets: {' '.join(hosts)}", flush=True)
+
+    root = Path(__file__).resolve().parents[1]
+    runner = str(root / "bin/ansible-playbook")
+    os.execv(runner, [runner, *inventory_args,
+                      str(root / "upgrade-packages.yml"), "-e", "arg_hosts=all", *args])
+
+
+if __name__ == "__main__":
+    sys.exit(main())

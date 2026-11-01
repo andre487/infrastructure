@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
-set -ex -o pipefail
+set -e -o pipefail
 
-cd "$(dirname "$0")/.."
-rm -rf .venv
-python3 -m venv --copies --upgrade-deps .venv
-.venv/bin/python -m pip install -r requirements.txt
+dir="$(cd "$(dirname "$0")/.." && pwd)"
+exec uv sync --locked --project "$dir"

@@ -1,0 +1,12 @@
+- name: Switch to administrator with password authentication and connection reuse disabled
+  ansible.builtin.set_fact:
+    ansible_user: "{{ bootstrap_admin_user }}"
+    ansible_password: ''
+    ansible_ssh_pass: ''
+    ansible_become_password: ''
+    ansible_become: true
+    ansible_ssh_private_key_file: "{{ bootstrap_admin_private_key_file | default('') }}"
+    ansible_ssh_extra_args: "{{ bootstrap_admin_ssh_extra_args | default('') }} {{ '-o IdentitiesOnly=yes' if bootstrap_admin_private_key_file is defined else '' }} -o PasswordAuthentication=no -o KbdInteractiveAuthentication=no -o ControlMaster=no -o ControlPath=none"
+  no_log: true
+- name: Reset SSH connection
+  ansible.builtin.meta: reset_connection

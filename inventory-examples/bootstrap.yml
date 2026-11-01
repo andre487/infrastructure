@@ -1,0 +1,23 @@
+all:
+  children:
+    bootstrap:
+      vars:
+        bootstrap_admin_user: deploy
+        bootstrap_admin_public_key: ssh-ed25519 REPLACE_WITH_PUBLIC_KEY
+        bootstrap_admin_private_key_file: ~/.ssh/id_ed25519
+      hosts:
+        example:
+          ansible_host: 203.0.113.10
+          # Omit ansible_user/key variables to use normal SSH configuration.
+          ansible_user: root
+          bootstrap_become: false
+          bootstrap_hostname: example-server
+          # Optional initial access; encrypt passwords with Ansible Vault:
+          # ansible_password: !vault |
+          #   ...
+          # ansible_ssh_private_key_file: ~/.ssh/initial_access_key
+          # For a cloud account requiring sudo:
+          # ansible_user: ubuntu
+          # bootstrap_become: true
+          # ansible_become_password: !vault |
+          #   ...

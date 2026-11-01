@@ -1,0 +1,229 @@
+---
+- name: Bootstrap administrative access
+  hosts: bootstrap
+  gather_facts: false
+  become: "{{ bootstrap_become | default(true) }}"
+  tasks:
+    - name: Validate administrator settings
+      ansible.builtin.assert:
+        that:
+          - not ansible_check_mode
+          - bootstrap_admin_user is match('^[a-z_][a-z0-9_-]*$')
+          - bootstrap_admin_user != 'root'
+          - bootstrap_admin_public_key.split() | length >= 2
+
+    - name: Try initial connection, falling back to previously bootstrapped administrator
+      block:
+        - name: Check initial SSH access
+          ansible.builtin.raw: /bin/true
+          become: false
+          changed_when: false
+          ignore_unreachable: true
+          register: bootstrap_initial
+          vars:
+            ansible_ssh_timeout: 10
+        - name: Fall back when initial SSH is unreachable
+          ansible.builtin.assert:
+            that: not (bootstrap_initial.unreachable | default(false))
+      rescue:
+        - name: Select administrative access
+          ansible.builtin.include_tasks: tasks/bootstrap-admin-connection.yml
+        - name: Check existing administrative access
+          ansible.builtin.raw: /bin/true
+          become: false
+          changed_when: false
+
+    - name: Ensure Python and sudo are available
+      ansible.builtin.raw: command -v python3 >/dev/null && command -v sudo >/dev/null || (apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y python3 sudo)
+      register: bootstrap_python
+      changed_when: "'Setting up' in bootstrap_python.stdout"
+
+    - name: Gather system facts
+      ansible.builtin.setup:
+
+    - name: Require Debian or Ubuntu
+      ansible.builtin.assert:
+        that: ansible_facts.distribution in ['Debian', 'Ubuntu']
+
+    - name: Create administrative account without changing existing passwords
+      ansible.builtin.user:
+        name: "{{ bootstrap_admin_user }}"
+        create_home: true
+        groups: sudo
+        append: true
+        password: '!'
+        update_password: on_create
+
+    - name: Add administrative public key without removing other keys
+      ansible.posix.authorized_key:
+        user: "{{ bootstrap_admin_user }}"
+        key: "{{ bootstrap_admin_public_key }}"
+        exclusive: false
+
+    - name: Configure validated passwordless sudo
+      ansible.builtin.copy:
+        dest: "/etc/sudoers.d/bootstrap-{{ bootstrap_admin_user }}"
+        content: "{{ bootstrap_admin_user }} ALL=(ALL:ALL) NOPASSWD: ALL\n"
+        mode: '0440'
+        validate: /usr/sbin/visudo -cf %s
+
+    - name: Select and verify key-only administrative connection
+      ansible.builtin.include_tasks: tasks/bootstrap-admin-connection.yml
+
+    - name: Verify fresh administrative SSH connection
+      ansible.builtin.wait_for_connection:
+        timeout: 20
+
+    - name: Verify non-interactive sudo before disabling old access
+      ansible.builtin.command: sudo -n id -u
+      become: false
+      changed_when: false
+      register: bootstrap_sudo
+      failed_when: bootstrap_sudo.stdout != '0'
+
+    - name: Restore connection multiplexing after key verification
+      ansible.builtin.set_fact:
+        ansible_ssh_extra_args: "{{ bootstrap_admin_ssh_extra_args | default('') }}"
+
+    - name: Open normal administrative connection
+      ansible.builtin.meta: reset_connection
+
+    - name: Upgrade all packages
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 300
+        upgrade: dist
+        lock_timeout: 600
+
+    - name: Remove unused packages and clean cache
+      ansible.builtin.apt:
+        autoremove: true
+        autoclean: true
+        clean: true
+
+    - name: Install minimal runtime and SSH protection
+      ansible.builtin.apt:
+        name: [python3, sudo, ca-certificates, openssh-server, fail2ban, ufw]
+        state: present
+
+    - name: Set optional hostname
+      ansible.builtin.hostname:
+        name: "{{ bootstrap_hostname }}"
+      when: bootstrap_hostname is defined
+
+    - name: Use UTC timezone
+      community.general.timezone:
+        name: UTC
+
+    - name: Install baseline SSH jail (project configuration may override it)
+      ansible.builtin.copy:
+        dest: /etc/fail2ban/jail.d/00-bootstrap.conf
+        content: |
+          [sshd]
+          enabled = true
+          backend = systemd
+          port = {{ ansible_port | default(22) }}
+          maxretry = 5
+          bantime = 3600
+        mode: '0644'
+      register: bootstrap_jail
+
+    - name: Validate fail2ban configuration
+      ansible.builtin.command: fail2ban-client -t
+      changed_when: false
+
+    - name: Enable SSH protection
+      ansible.builtin.systemd_service:
+        name: fail2ban
+        enabled: true
+        state: "{{ 'restarted' if bootstrap_jail.changed else 'started' }}"
+
+    - name: Rate-limit SSH before existing broad allow rules
+      community.general.ufw:
+        rule: limit
+        port: "{{ ansible_port | default(22) }}"
+        proto: tcp
+        insert: 1
+        comment: bootstrap SSH
+
+    - name: Enable firewall without resetting rules or changing existing policies
+      community.general.ufw:
+        state: enabled
+
+    - name: Read previous SSH policy
+      ansible.builtin.stat:
+        path: /etc/ssh/sshd_config.d/00-bootstrap.conf
+      register: bootstrap_policy_stat
+
+    - name: Preserve previous SSH policy
+      ansible.builtin.slurp:
+        src: /etc/ssh/sshd_config.d/00-bootstrap.conf
+      register: bootstrap_policy_old
+      when: bootstrap_policy_stat.stat.exists
+
+    - name: Harden SSH only after verified administrative access
+      block:
+        - name: Install key-only SSH policy
+          ansible.builtin.copy:
+            dest: /etc/ssh/sshd_config.d/00-bootstrap.conf
+            content: |
+              PermitRootLogin no
+              PubkeyAuthentication yes
+              PasswordAuthentication no
+              KbdInteractiveAuthentication no
+            mode: '0644'
+          register: bootstrap_policy
+        - name: Validate SSH configuration
+          ansible.builtin.command: /usr/sbin/sshd -t
+          changed_when: false
+        - name: Read connection context
+          ansible.builtin.command: printenv SSH_CONNECTION
+          become: false
+          changed_when: false
+          register: bootstrap_connection
+        - name: Inspect effective root and administrator policies
+          ansible.builtin.command:
+            argv: [/usr/sbin/sshd, -T, -C, "user={{ item }},host={{ ansible_facts.hostname }},addr={{ bootstrap_connection.stdout.split()[0] }},laddr={{ bootstrap_connection.stdout.split()[2] }},lport={{ bootstrap_connection.stdout.split()[3] }}"]
+          loop: [root, "{{ bootstrap_admin_user }}"]
+          changed_when: false
+          register: bootstrap_effective
+        - name: Require effective key-only policy
+          ansible.builtin.assert:
+            that:
+              - "'permitrootlogin no' in item.stdout_lines"
+              - "'passwordauthentication no' in item.stdout_lines"
+              - "'kbdinteractiveauthentication no' in item.stdout_lines"
+              - "'pubkeyauthentication yes' in item.stdout_lines"
+            quiet: true
+          loop: "{{ bootstrap_effective.results }}"
+          loop_control:
+            label: "{{ item.item }}"
+        - name: Reload SSH when policy changed
+          ansible.builtin.systemd_service:
+            name: ssh
+            state: reloaded
+          when: bootstrap_policy.changed
+        - name: Close administrative connection for final check
+          ansible.builtin.meta: reset_connection
+        - name: Verify administrative access after reload
+          ansible.builtin.wait_for_connection:
+            timeout: 20
+      rescue:
+        - name: Restore policy through surviving access when available
+          ansible.builtin.copy:
+            dest: /etc/ssh/sshd_config.d/00-bootstrap.conf
+            content: "{{ bootstrap_policy_old.content | b64decode }}"
+            mode: '0644'
+          when: bootstrap_policy_stat.stat.exists
+        - name: Remove new policy when no previous file existed
+          ansible.builtin.file:
+            path: /etc/ssh/sshd_config.d/00-bootstrap.conf
+            state: absent
+          when: not bootstrap_policy_stat.stat.exists
+        - name: Reload restored SSH policy
+          ansible.builtin.systemd_service:
+            name: ssh
+            state: reloaded
+        - name: Report unsuccessful hardening
+          ansible.builtin.fail:
+            msg: SSH hardening failed; check recovery console if administrative access was lost.
